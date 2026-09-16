@@ -1,0 +1,69 @@
+import 'package:latlong2/latlong.dart';
+import 'journey_mode_config.dart';
+import 'check_in.dart';
+
+enum JourneyStatus {
+  idle,
+  active,
+  checkInPending,
+  escalated,
+  completed,
+}
+
+class Journey {
+  final String id;
+  final JourneyModeConfig mode;
+  final String destinationName;
+  final LatLng destinationLatLng;
+  final DateTime startTime;
+  final Duration expectedDuration;
+  final JourneyStatus status;
+  final List<CheckIn> checkIns;
+  final List<LatLng> routePoints;
+  final LatLng currentPosition;
+  final bool isDeviated;
+  final String? incidentSummary;
+  final String? riskBriefing;
+
+  Journey({
+    required this.id,
+    required this.mode,
+    required this.destinationName,
+    required this.destinationLatLng,
+    required this.startTime,
+    required this.expectedDuration,
+    this.status = JourneyStatus.active,
+    this.checkIns = const [],
+    this.routePoints = const [],
+    required this.currentPosition,
+    this.isDeviated = false,
+    this.incidentSummary,
+    this.riskBriefing,
+  });
+
+  Journey copyWith({
+    JourneyStatus? status,
+    List<CheckIn>? checkIns,
+    List<LatLng>? routePoints,
+    LatLng? currentPosition,
+    bool? isDeviated,
+    String? incidentSummary,
+    String? riskBriefing,
+  }) {
+    return Journey(
+      id: id,
+      mode: mode,
+      destinationName: destinationName,
+      destinationLatLng: destinationLatLng,
+      startTime: startTime,
+      expectedDuration: expectedDuration,
+      status: status ?? this.status,
+      checkIns: checkIns ?? this.checkIns,
+      routePoints: routePoints ?? this.routePoints,
+      currentPosition: currentPosition ?? this.currentPosition,
+      isDeviated: isDeviated ?? this.isDeviated,
+      incidentSummary: incidentSummary ?? this.incidentSummary,
+      riskBriefing: riskBriefing ?? this.riskBriefing,
+    );
+  }
+}
