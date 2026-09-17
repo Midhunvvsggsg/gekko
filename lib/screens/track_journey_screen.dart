@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:intl/intl.dart';
 import '../services/journey_sync_service.dart';
+import '../utils/time_utils.dart';
 
 class TrackJourneyScreen extends ConsumerStatefulWidget {
   final String journeyId;
@@ -150,9 +150,12 @@ class _TrackJourneyScreenState extends ConsumerState<TrackJourneyScreen> {
                                   children: [
                                     Icon(Icons.schedule_outlined, size: 16, color: Colors.grey[600]),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      'Started at ${DateFormat.jm().format(data.startTime)} • Expected: ${data.expectedDurationMinutes} mins',
-                                      style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                                    Expanded(
+                                      child: Text(
+                                        'Started at ${TimeUtils.formatKolkataTime(data.startTime)} • Expected Arrival: ${TimeUtils.formatKolkataTime(data.startTime.add(Duration(minutes: data.expectedDurationMinutes)))}',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey[800], fontWeight: FontWeight.w600),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ],
                                 ),

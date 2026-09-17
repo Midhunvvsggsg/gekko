@@ -11,6 +11,8 @@ class JourneyModeConfig {
   final Duration escalationGracePeriod;
   final String modeDescription;
 
+  final double averageSpeedKmH;
+
   const JourneyModeConfig({
     required this.id,
     required this.label,
@@ -21,7 +23,17 @@ class JourneyModeConfig {
     required this.primaryRiskSignal,
     required this.escalationGracePeriod,
     required this.modeDescription,
+    this.averageSpeedKmH = 20.0,
   });
+
+  Duration calculateEstimatedDuration(double distanceKm) {
+    if (distanceKm <= 0 || averageSpeedKmH <= 0) {
+      return const Duration(minutes: 15);
+    }
+    final hours = distanceKm / averageSpeedKmH;
+    final mins = (hours * 60).round().clamp(3, 1440);
+    return Duration(minutes: mins);
+  }
 
   static const List<JourneyModeConfig> defaultModes = [
     JourneyModeConfig(
@@ -34,6 +46,7 @@ class JourneyModeConfig {
       primaryRiskSignal: 'Route deviation or prolonged unexpected stop',
       escalationGracePeriod: Duration(minutes: 3),
       modeDescription: 'Continuous GPS tracking active. AI will prompt check-in every 8 mins or on unexpected stops.',
+      averageSpeedKmH: 5.0,
     ),
     JourneyModeConfig(
       id: 'train',
@@ -45,6 +58,7 @@ class JourneyModeConfig {
       primaryRiskSignal: 'Missed scheduled arrival window or station pass-through',
       escalationGracePeriod: Duration(minutes: 10),
       modeDescription: 'Station-to-station checkpoint monitoring. Reduced GPS tracking inside underground tunnels.',
+      averageSpeedKmH: 45.0,
     ),
     JourneyModeConfig(
       id: 'bus',
@@ -56,6 +70,7 @@ class JourneyModeConfig {
       primaryRiskSignal: 'Missed expected transit stop or unexpected detour',
       escalationGracePeriod: Duration(minutes: 8),
       modeDescription: 'Light GPS monitoring with periodic check-ins every 15 mins based on route progress.',
+      averageSpeedKmH: 25.0,
     ),
     JourneyModeConfig(
       id: 'taxi',
@@ -67,6 +82,7 @@ class JourneyModeConfig {
       primaryRiskSignal: 'Sharp route deviation or unannounced off-path stop',
       escalationGracePeriod: Duration(minutes: 2),
       modeDescription: 'High-security route deviation tracking. Short grace period for fast escalation if needed.',
+      averageSpeedKmH: 35.0,
     ),
     JourneyModeConfig(
       id: 'other',
@@ -78,6 +94,7 @@ class JourneyModeConfig {
       primaryRiskSignal: 'Overall journey timeout without safety response',
       escalationGracePeriod: Duration(minutes: 5),
       modeDescription: 'General timer monitoring with customizable safety prompts.',
+      averageSpeedKmH: 20.0,
     ),
   ];
 

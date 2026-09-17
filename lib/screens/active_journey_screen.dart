@@ -9,6 +9,7 @@ import '../models/journey.dart';
 import '../models/journey_mode_config.dart';
 import '../providers/journey_provider.dart';
 import '../providers/settings_provider.dart';
+import '../utils/time_utils.dart';
 import 'check_in_modal.dart';
 
 class ActiveJourneyScreen extends ConsumerStatefulWidget {
@@ -27,11 +28,20 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
         ? '${Uri.base.origin}/#/track/${journey.id}'
         : 'http://localhost:8080/#/track/${journey.id}';
 
-    Clipboard.setData(ClipboardData(text: trackUrl));
+    final etaStr = TimeUtils.formatKolkataTime(journey.startTime.add(journey.expectedDuration));
+
+    final summaryText = "🛡️ GEKKO LIVE JOURNEY TRACKING\n"
+        "• Transport Engine: ${journey.mode.label}\n"
+        "• Destination: ${journey.destinationName}\n"
+        "• Expected Arrival Time: $etaStr (Kolkata Time)\n"
+        "• Live Track Link: $trackUrl";
+
+    Clipboard.setData(ClipboardData(text: summaryText));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Public Journey Tracking Link copied: $trackUrl'),
+        content: Text('Journey Details & Live Tracking Link copied! (ETA: $etaStr)'),
         behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.safeGreen,
       ),
     );
   }
@@ -224,6 +234,11 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
                                   journey.destinationName,
                                   style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
                                   overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'ETA: ${TimeUtils.formatKolkataTime(journey.startTime.add(journey.expectedDuration))}',
+                                  style: GoogleFonts.ibmPlexMono(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary),
                                 ),
                               ],
                             ),

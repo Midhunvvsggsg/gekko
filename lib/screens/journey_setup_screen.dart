@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,7 @@ import '../models/journey_mode_config.dart';
 import '../services/location_service.dart';
 import '../providers/journey_provider.dart';
 import '../providers/ai_provider.dart';
+import '../utils/time_utils.dart';
 
 class JourneySetupScreen extends ConsumerStatefulWidget {
   const JourneySetupScreen({super.key});
@@ -47,6 +49,57 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
     _detectStartLocation();
   }
 
+  double get _calculatedDistanceKm {
+    final startLatLng = _currentStartLocation?.position ?? LocationService.defaultStart;
+    return TimeUtils.calculateDistanceKm(startLatLng, _selectedLatLng);
+  }
+
+  void _recalculateAutoEta() {
+    final dist = _calculatedDistanceKm;
+    final estimatedDuration = _selectedMode.calculateEstimatedDuration(dist);
+    setState(() {
+      _expectedDurationMinutes = estimatedDuration.inMinutes;
+      _durationController.text = _expectedDurationMinutes.toString();
+    });
+  }
+
+  String get _formattedKolkataEta {
+    final now = DateTime.now();
+    final etaTime = now.add(Duration(minutes: _expectedDurationMinutes));
+    return TimeUtils.formatKolkataTime(etaTime);
+  }
+
+  void _shareJourneyDetails() {
+    final startName = _currentStartLocation?.locationName ?? 'Current Location';
+    final destName = _destinationController.text.trim().isEmpty
+        ? 'Muvattupuzha KSRTC Stand, Ernakulam'
+        : _destinationController.text.trim();
+    final dist = _calculatedDistanceKm;
+    final etaStr = _formattedKolkataEta;
+    final modeLabel = _selectedMode.label;
+
+    final summaryText = "🛡️ GEKKO SAFETY JOURNEY PLAN\n"
+        "• Transport Engine: $modeLabel\n"
+        "• Origin: $startName\n"
+        "• Destination: $destName\n"
+        "• Route Distance: ${dist.toStringAsFixed(1)} km\n"
+        "• Estimated Duration: $_expectedDurationMinutes mins\n"
+        "• Expected Arrival Time: $etaStr (Kolkata Time)\n"
+        "• Live Tracking Link: ${Uri.base.origin}/#/track/preview";
+
+    Clipboard.setData(ClipboardData(text: summaryText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Journey details copied to clipboard! (ETA: $etaStr)',
+          style: GoogleFonts.ibmPlexMono(fontSize: 12),
+        ),
+        backgroundColor: AppColors.safeGreen,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   Future<void> _detectStartLocation() async {
     setState(() {
       _isDetectingStartLocation = true;
@@ -57,6 +110,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
         _currentStartLocation = result;
         _isDetectingStartLocation = false;
       });
+      _recalculateAutoEta();
     }
   }
 
@@ -124,6 +178,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
       _selectedLatLng = result.latLng;
       _searchResults = [];
     });
+    _recalculateAutoEta();
     _fetchRiskBriefing();
   }
 
@@ -187,6 +242,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                           setState(() {
                             _selectedMode = mode;
                           });
+                          _recalculateAutoEta();
                           _fetchRiskBriefing();
                         },
                         borderRadius: BorderRadius.circular(4),
@@ -336,6 +392,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                                 _selectedLatLng = preset['coords'];
                                 _searchResults = [];
                               });
+                              _recalculateAutoEta();
                               _fetchRiskBriefing();
                             },
                           );
@@ -408,6 +465,76 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                       },
                     ),
                   ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // Live Calculated Distance & Kolkata Time Zone ETA Card
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(4),
+                    border: const Border(
+                      left: BorderSide(color: AppColors.accentSecondary, width: 4.0),
+                      top: BorderSide(color: AppColors.border, width: 1.0),
+                      right: BorderSide(color: AppColors.border, width: 1.0),
+                      bottom: BorderSide(color: AppColors.border, width: 1.0),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time_filled, color: AppColors.accentSecondary, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'EXPECTED ARRIVAL (KOLKATA TIME ZONE - IST)',
+                            style: GoogleFonts.ibmPlexMono(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(2),
+                              border: Border.all(color: AppColors.border, width: 1.0),
+                            ),
+                            child: Text(
+                              '${_calculatedDistanceKm.toStringAsFixed(1)} KM',
+                              style: GoogleFonts.ibmPlexMono(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _formattedKolkataEta,
+                        style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.primary),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Auto-calculated based on ${_selectedMode.label} avg speed (${_selectedMode.averageSpeedKmH.toInt()} km/h). You can edit duration above before starting.',
+                        style: GoogleFonts.ibmPlexSans(fontSize: 11, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // Share Pre-Journey Plan Button
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  onPressed: _shareJourneyDetails,
+                  icon: const Icon(Icons.share_outlined, size: 16, color: AppColors.primary),
+                  label: Text(
+                    'SHARE JOURNEY DETAILS & ETA WITH CONTACTS',
+                    style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                  ),
                 ),
 
                 const SizedBox(height: 20),
