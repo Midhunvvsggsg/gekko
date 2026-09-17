@@ -220,21 +220,40 @@ class AIService {
             "- 'uncertain': User expresses nervousness, uncomfortable feeling, unlit path, uneasy stranger, or trailing person.\n"
             "- 'concerning': Explicit help request, aggressive threat, panic, assault, or urgent danger.";
 
-        final contents = history.map((msg) {
-          return {
-            "role": msg['sender'] == 'user' ? 'user' : 'model',
-            "parts": [
-              {"text": msg['text']}
-            ]
-          };
-        }).toList();
+        final List<Map<String, dynamic>> contents = [];
+        for (final msg in history) {
+          final role = msg['sender'] == 'user' ? 'user' : 'model';
+          // Gemini API requires the first message in contents to have 'user' role
+          if (contents.isEmpty && role != 'user') continue;
 
-        contents.add({
-          "role": "user",
-          "parts": [
-            {"text": userMessage}
-          ]
-        });
+          if (contents.isNotEmpty && contents.last['role'] == role) {
+            final prevText = (contents.last['parts'] as List)[0]['text'];
+            contents.last['parts'] = [
+              {"text": "$prevText\n${msg['text']}"}
+            ];
+          } else {
+            contents.add({
+              "role": role,
+              "parts": [
+                {"text": msg['text']}
+              ]
+            });
+          }
+        }
+
+        if (contents.isNotEmpty && contents.last['role'] == 'user') {
+          final prevText = (contents.last['parts'] as List)[0]['text'];
+          contents.last['parts'] = [
+            {"text": "$prevText\n$userMessage"}
+          ];
+        } else {
+          contents.add({
+            "role": "user",
+            "parts": [
+              {"text": userMessage}
+            ]
+          });
+        }
 
         final body = {
           "contents": contents,
