@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'theme/app_theme.dart';
 import 'services/storage_service.dart';
 import 'providers/settings_provider.dart';
+import 'providers/stealth_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/journey_setup_screen.dart';
 import 'screens/active_journey_screen.dart';
@@ -12,6 +13,7 @@ import 'screens/journey_complete_screen.dart';
 import 'screens/contacts_screen.dart';
 import 'screens/fake_call_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/calculator_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,16 +69,24 @@ final GoRouter _router = GoRouter(
   ],
 );
 
-class GekkoApp extends StatelessWidget {
+class GekkoApp extends ConsumerWidget {
   const GekkoApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isStealth = ref.watch(stealthProvider.select((s) => s.isStealthModeActive));
+
     return MaterialApp.router(
       title: 'Gekko — Personal Safety Companion',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: _router,
+      builder: (context, child) {
+        if (isStealth) {
+          return const CalculatorScreen();
+        }
+        return child ?? const SizedBox.shrink();
+      },
     );
   }
 }

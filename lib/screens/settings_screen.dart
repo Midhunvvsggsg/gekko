@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../providers/settings_provider.dart';
+import '../providers/stealth_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -44,6 +45,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
+    final isStealth = ref.watch(stealthProvider.select((s) => s.isStealthModeActive));
     final hasApiKey = settings.apiKey.trim().isNotEmpty;
 
     return Scaffold(
@@ -201,6 +203,118 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
 
+                const SizedBox(height: 20),
+
+                // 4. Stealth Disguise Mode Section
+                Text(
+                  '4. STEALTH DISGUISE MODE (CALCULATOR SHELL)',
+                  style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0.8),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Disguises Gekko as a functioning stock Calculator app while GPS monitoring, silent panic, and passive AI check-ins continue running invisibly.',
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 10),
+
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: isStealth ? AppColors.primary : AppColors.border,
+                      width: isStealth ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: SwitchListTile(
+                    value: isStealth,
+                    activeThumbColor: AppColors.primary,
+                    activeTrackColor: AppColors.surfaceVariant,
+                    onChanged: (val) {
+                      ref.read(stealthProvider.notifier).setStealthMode(val);
+                    },
+                    title: Text(
+                      'ENABLE STEALTH MODE (CALCULATOR DISGUISE)',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isStealth ? AppColors.primary : AppColors.textPrimary,
+                      ),
+                    ),
+                    subtitle: Text(
+                      isStealth
+                          ? 'DISGUISED: App shell swapped to stock Calculator app.'
+                          : 'INACTIVE: Standard Gekko Dispatch Console UI.',
+                      style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // Secret Code Guide Reference Card (no borderRadius with left border accent)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    border: Border(
+                      left: BorderSide(color: AppColors.primary, width: 4.0),
+                      top: BorderSide(color: AppColors.border, width: 1.0),
+                      right: BorderSide(color: AppColors.border, width: 1.0),
+                      bottom: BorderSide(color: AppColors.border, width: 1.0),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SECRET DISGUISE CODES (CALCULATOR KEYPAD)',
+                        style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            color: AppColors.primary,
+                            child: Text(
+                              '${StealthCodes.unlockCode}=',
+                              style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Return to real Gekko Console UI',
+                              style: GoogleFonts.ibmPlexSans(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            color: AppColors.sosRed,
+                            child: Text(
+                              '${StealthCodes.panicCode}=',
+                              style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Trigger Silent Emergency Panic SOS (Zero visual feedback change)',
+                              style: GoogleFonts.ibmPlexSans(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: 24),
 
                 // Save Button (4px max rectangular navy button)
@@ -223,3 +337,4 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 }
+

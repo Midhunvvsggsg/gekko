@@ -89,4 +89,15 @@ class StorageService {
   Future<void> saveDemoMode(bool enabled) async {
     await prefs.setBool(_keyDemoMode, enabled);
   }
+
+  // --- Stealth Mode ---
+  static const String _keyStealthMode = 'gekko_stealth_mode';
+
+  bool getStealthMode() {
+    return prefs.getBool(_keyStealthMode) ?? false;
+  }
+
+  Future<void> saveStealthMode(bool enabled) async {
+    await prefs.setBool(_keyStealthMode, enabled);
+  }
 }

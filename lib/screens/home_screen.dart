@@ -8,6 +8,7 @@ import '../models/journey_mode_config.dart';
 import '../providers/journey_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/stealth_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -191,12 +192,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   builder: (context, constraints) {
                     final isWide = constraints.maxWidth > 550;
                     return GridView.count(
-                      crossAxisCount: isWide ? 3 : 1,
+                      crossAxisCount: isWide ? 4 : 2,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
-                      childAspectRatio: isWide ? 1.8 : 3.2,
+                      childAspectRatio: isWide ? 1.5 : 2.5,
                       children: [
                         _buildQuickActionTile(
                           context,
@@ -232,6 +233,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                 ),
                           onTap: () => context.push('/settings'),
+                        ),
+                        _buildQuickActionTile(
+                          context,
+                          icon: Icons.calculate_outlined,
+                          title: 'Stealth Disguise',
+                          subtitle: 'Stock calculator shell',
+                          onTap: () => ref.read(stealthProvider.notifier).enableStealth(),
                         ),
                       ],
                     );

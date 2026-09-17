@@ -8,11 +8,13 @@ import '../services/ai_service.dart';
 import '../services/location_service.dart';
 import 'ai_provider.dart';
 import 'settings_provider.dart';
+import 'stealth_provider.dart';
 
 class JourneyStateNotifier extends StateNotifier<Journey?> {
   final AIService _aiService;
   final String _duressPhrase;
   final bool _isDemoMode;
+  final bool _isStealthModeActive;
 
   Timer? _countdownTimer;
   Timer? _locationTimer;
@@ -20,7 +22,12 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
   int _secondsToNextCheckIn = 0;
   int get secondsToNextCheckIn => _secondsToNextCheckIn;
 
-  JourneyStateNotifier(this._aiService, this._duressPhrase, this._isDemoMode) : super(null);
+  JourneyStateNotifier(
+    this._aiService,
+    this._duressPhrase,
+    this._isDemoMode,
+    this._isStealthModeActive,
+  ) : super(null);
 
   /// Starts a new journey with the specified JourneyModeConfig
   Future<void> startJourney({
@@ -84,8 +91,12 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
         // Force state notification tick for timer UI
         state = state!.copyWith();
       } else {
-        // Trigger Check-In Pending
-        _triggerPendingCheckIn();
+        // Trigger Check-In (Passive if in Stealth Mode, Interactive otherwise)
+        if (_isStealthModeActive) {
+          _performPassiveCheckIn();
+        } else {
+          _triggerPendingCheckIn();
+        }
       }
     });
 
@@ -120,6 +131,51 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
       status: JourneyStatus.checkInPending,
       checkIns: updatedCheckIns,
     );
+  }
+
+  /// Perform silent passive check-in during Stealth Mode
+  Future<void> _performPassiveCheckIn() async {
+    if (state == null) return;
+
+    if (state!.isDeviated) {
+      final updatedCheckIn = CheckIn(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        timestamp: DateTime.now(),
+        promptText: 'Passive GPS Monitoring (Stealth Mode)',
+        userResponse: '[Off-Route Deviation Detected]',
+        classification: const CheckInClassification(
+          status: CheckInStatus.concerning,
+          rationale: 'Passive monitoring detected off-route deviation during Stealth Mode.',
+          duressDetected: false,
+        ),
+      );
+      final updatedCheckIns = [...state!.checkIns, updatedCheckIn];
+
+      final summary = await _aiService.generateIncidentSummary(state!, updatedCheckIn);
+      state = state!.copyWith(
+        status: JourneyStatus.escalated,
+        checkIns: updatedCheckIns,
+        incidentSummary: summary,
+      );
+    } else {
+      final silentCheckIn = CheckIn(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        timestamp: DateTime.now(),
+        promptText: 'Passive AI Check-In (Stealth Mode)',
+        userResponse: '[Passive Auto-Verified]',
+        classification: const CheckInClassification(
+          status: CheckInStatus.safe,
+          rationale: 'Passive signals normal. Route & pace verified in Stealth Mode.',
+          duressDetected: false,
+        ),
+      );
+      final updatedCheckIns = [...state!.checkIns, silentCheckIn];
+      state = state!.copyWith(
+        status: JourneyStatus.active,
+        checkIns: updatedCheckIns,
+      );
+      _resetCheckInCountdown();
+    }
   }
 
   /// User responds to check-in prompt via modal
@@ -190,8 +246,11 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
     );
 
     if (newDeviated && state!.mode.trustLiveGps) {
-      // Instantly trigger check-in modal on deviation if mode trusts live GPS
-      _triggerPendingCheckIn();
+      if (_isStealthModeActive) {
+        _performPassiveCheckIn();
+      } else {
+        _triggerPendingCheckIn();
+      }
     }
   }
 
@@ -253,5 +312,6 @@ final journeyProvider = StateNotifierProvider<JourneyStateNotifier, Journey?>((r
   final aiService = ref.watch(aiServiceProvider);
   final duressPhrase = ref.watch(settingsProvider.select((s) => s.duressPhrase));
   final isDemoMode = ref.watch(settingsProvider.select((s) => s.isDemoMode));
-  return JourneyStateNotifier(aiService, duressPhrase, isDemoMode);
+  final isStealthModeActive = ref.watch(stealthProvider.select((s) => s.isStealthModeActive));
+  return JourneyStateNotifier(aiService, duressPhrase, isDemoMode, isStealthModeActive);
 });
