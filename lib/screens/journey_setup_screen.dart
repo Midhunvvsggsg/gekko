@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_colors.dart';
 import '../models/journey_mode_config.dart';
@@ -118,14 +119,17 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Setup Safety Journey'),
+        title: Text(
+          'CONFIGURE DISPATCH PROFILE',
+          style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
@@ -133,19 +137,19 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 1. Mode Selection Header
-                const Text(
-                  '1. Select Transport Mode',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                Text(
+                  '1. SELECT TRANSPORT ENGINE',
+                  style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0.8),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
-                // Horizontal Mode Selector Chips
+                // Rectangular 4px max Mode Selector Chips
                 SizedBox(
-                  height: 90,
+                  height: 84,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: JourneyModeConfig.defaultModes.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       final mode = JourneyModeConfig.defaultModes[index];
                       final isSelected = mode.id == _selectedMode.id;
@@ -156,17 +160,17 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                           });
                           _fetchRiskBriefing();
                         },
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(4),
                         child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                          duration: const Duration(milliseconds: 150),
                           width: 120,
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppColors.primaryContainer : AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
+                            color: isSelected ? AppColors.primary : AppColors.surface,
+                            borderRadius: BorderRadius.circular(4),
                             border: Border.all(
                               color: isSelected ? AppColors.primary : AppColors.border,
-                              width: isSelected ? 2 : 1,
+                              width: 1.0,
                             ),
                           ),
                           child: Column(
@@ -174,16 +178,16 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                             children: [
                               Icon(
                                 mode.icon,
-                                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                                size: 28,
+                                color: isSelected ? Colors.white : AppColors.textPrimary,
+                                size: 22,
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 mode.label,
-                                style: TextStyle(
+                                style: GoogleFonts.spaceGrotesk(
                                   fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected ? Colors.white : AppColors.textPrimary,
                                 ),
                               ),
                             ],
@@ -194,14 +198,14 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // 2. Destination Input & Live Place Autocomplete
-                const Text(
-                  '2. Destination & Duration',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                Text(
+                  '2. TARGET DESTINATION & DURATION',
+                  style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0.8),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
                 TextField(
                   controller: _destinationController,
@@ -214,9 +218,9 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                     }
                   },
                   decoration: InputDecoration(
-                    labelText: 'Destination Name or Address',
+                    labelText: 'Destination Address or Landmark',
                     hintText: 'e.g. Union Square, San Francisco',
-                    prefixIcon: const Icon(Icons.place_outlined, color: AppColors.primary),
+                    prefixIcon: const Icon(Icons.place_outlined, color: AppColors.textPrimary, size: 20),
                     suffixIcon: _isSearchingLocation
                         ? const Padding(
                             padding: EdgeInsets.all(12),
@@ -247,15 +251,8 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                   Container(
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.primary, width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.primary, width: 1.2),
                     ),
                     child: ListView.separated(
                       shrinkWrap: true,
@@ -266,14 +263,14 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                         final result = _searchResults[index];
                         return ListTile(
                           dense: true,
-                          leading: const Icon(Icons.location_on, color: AppColors.primary, size: 20),
+                          leading: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 18),
                           title: Text(
                             result.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
                           ),
                           subtitle: Text(
                             result.description,
-                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.textSecondary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -284,18 +281,21 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                   ),
                 ],
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
                 // Preset Buttons
                 Row(
                   children: [
-                    const Text('Quick Select: ', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    Text('Presets: ', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
                     Expanded(
                       child: Wrap(
-                        spacing: 8,
+                        spacing: 6,
                         children: _destinationPresets.map((preset) {
-                          return ActionChip(
-                            label: Text(preset['name'], style: const TextStyle(fontSize: 12)),
+                          return OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            ),
+                            child: Text(preset['name'], style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.textPrimary)),
                             onPressed: () {
                               setState(() {
                                 _destinationController.text = preset['name'];
@@ -311,19 +311,19 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
                 // Expected Duration Chips
                 Row(
                   children: [
-                    const Text('Expected Duration: ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    Text('EXPECTED TIME: ', style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                     const SizedBox(width: 8),
                     Wrap(
-                      spacing: 8,
+                      spacing: 6,
                       children: [15, 20, 30, 45, 60].map((mins) {
                         final isSelected = _expectedDurationMinutes == mins;
                         return ChoiceChip(
-                          label: Text('$mins mins'),
+                          label: Text('${mins}M'),
                           selected: isSelected,
                           onSelected: (selected) {
                             if (selected) {
@@ -332,10 +332,11 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                               });
                             }
                           },
-                          selectedColor: AppColors.primaryContainer,
-                          labelStyle: TextStyle(
-                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          selectedColor: AppColors.primary,
+                          labelStyle: GoogleFonts.ibmPlexMono(
+                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
                           ),
                         );
                       }).toList(),
@@ -343,106 +344,106 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // 3. Mode-Specific AI Safety Behavior Summary Card
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.border, width: 1.0),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(_selectedMode.icon, color: AppColors.primary),
+                          Icon(_selectedMode.icon, color: AppColors.primary, size: 20),
                           const SizedBox(width: 10),
                           Text(
-                            '${_selectedMode.label} Monitoring Profile',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            '${_selectedMode.label.toUpperCase()} MONITORING SPECIFICATION',
+                            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
                           ),
                         ],
                       ),
-                      const Divider(height: 20),
+                      const Divider(height: 16, color: AppColors.border),
                       _buildProfileRow(
                         'Check-In Frequency',
-                        'Every ${_selectedMode.checkInInterval.inMinutes} minutes (AI Conversational Prompt)',
+                        'Every ${_selectedMode.checkInInterval.inMinutes} minutes (Conversational AI Prompt)',
                         Icons.timer_outlined,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       _buildProfileRow(
-                        'GPS Deviation Monitoring',
-                        _selectedMode.trustLiveGps ? 'Active (Alerts on unexpected stops or detours)' : 'Station / Checkpoint Based',
+                        'GPS Instrumentation',
+                        _selectedMode.trustLiveGps ? 'Active (Alerts on off-route detours or stops)' : 'Checkpoint / Station Based',
                         Icons.gps_fixed_outlined,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       _buildProfileRow(
-                        'Primary Risk Signal',
+                        'Primary Risk Trigger',
                         _selectedMode.primaryRiskSignal,
-                        Icons.warning_amber_rounded,
+                        Icons.warning_amber_outlined,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       _buildProfileRow(
-                        'Escalation Grace Period',
-                        '${_selectedMode.escalationGracePeriod.inMinutes} minutes before emergency contact alert',
-                        Icons.hourglass_bottom_rounded,
+                        'Escalation Grace Window',
+                        '${_selectedMode.escalationGracePeriod.inMinutes} minutes before emergency network alert',
+                        Icons.hourglass_bottom_outlined,
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // 4. Gemini AI Risk Briefing Card
+                // 4. Gemini AI Risk Briefing Card (Dispatch Console Dark Panel)
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.textPrimary, // #0E1A2B
+                    borderRadius: BorderRadius.circular(4),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.auto_awesome, color: Colors.amber, size: 20),
+                          const Icon(Icons.bolt, color: AppColors.accentSecondary, size: 18),
                           const SizedBox(width: 8),
-                          const Text(
-                            'Gemini AI Pre-Journey Risk Briefing',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          Text(
+                            'AI PRE-JOURNEY RISK BRIEFING',
+                            style: GoogleFonts.ibmPlexMono(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.8),
                           ),
                           const Spacer(),
                           if (_isBriefingLoading)
                             const SizedBox(
                               width: 14,
                               height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accentSecondary),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Text(
                         _riskBriefingText ?? 'Generating location safety analysis...',
-                        style: TextStyle(color: Colors.grey.shade300, fontSize: 13, height: 1.4),
+                        style: GoogleFonts.ibmPlexMono(color: AppColors.surfaceVariant, fontSize: 12, height: 1.4),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
-                // Start Journey Button
+                // Start Journey Button (Rectangular 4px max, solid navy fill)
                 SizedBox(
-                  height: 54,
+                  height: 48,
                   child: ElevatedButton.icon(
                     onPressed: _onStartJourney,
-                    icon: const Icon(Icons.shield_rounded),
+                    icon: const Icon(Icons.navigation_outlined, size: 18),
                     label: Text(
-                      'Confirm & Start ${_selectedMode.label} Journey',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      'START ${_selectedMode.label.toUpperCase()} JOURNEY',
+                      style: GoogleFonts.spaceGrotesk(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.8),
                     ),
                   ),
                 ),
@@ -458,19 +459,19 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: AppColors.textMuted),
+        Icon(icon, size: 14, color: AppColors.textSecondary),
         const SizedBox(width: 8),
         SizedBox(
           width: 160,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+            style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w500),
           ),
         ),
       ],

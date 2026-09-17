@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../providers/journey_provider.dart';
 import '../providers/contacts_provider.dart';
@@ -50,86 +51,86 @@ class _SosEscalationScreenState extends ConsumerState<SosEscalationScreen> {
     final summaryText = journey?.incidentSummary ?? "🚨 EMERGENCY INCIDENT REPORT\n\n• Trigger: SOS Alarm\n• Status: Contact Notification Dispatched";
 
     return Scaffold(
-      backgroundColor: AppColors.sosRedBg,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.sosRed,
+        backgroundColor: AppColors.sosRed, // #B3261E Deep Red
         foregroundColor: Colors.white,
-        title: const Text('GEKKO EMERGENCY ESCALATION', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+        title: Text(
+          'EMERGENCY DISPATCH ESCALATION',
+          style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, letterSpacing: 0.8, fontSize: 15),
+        ),
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. Loud Alert Card
+                // 1. High-Alert Dispatch Card (Deep Red #B3261E, 4px max radius)
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.sosRed,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.warning_amber_rounded, size: 48, color: Colors.white),
-                      const SizedBox(height: 10),
-                      const Text(
+                      const Icon(Icons.warning_amber_rounded, size: 36, color: Colors.white),
+                      const SizedBox(height: 8),
+                      Text(
                         'EMERGENCY SOS ACTIVE',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 1.0),
+                        style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.0),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         _dispatchCountdown > 0
-                            ? 'Simulating automated emergency call in $_dispatchCountdown seconds...'
+                            ? 'Simulating automated emergency call dispatch in $_dispatchCountdown seconds...'
                             : 'Automated 911 / Emergency dispatch protocol triggered.',
-                        style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
+                        style: GoogleFonts.ibmPlexMono(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500),
                         textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-                // 2. AI Incident Summary Card
+                // 2. AI Incident Summary Card (Monospace instrumentation readout)
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.sosRedBorder, width: 2),
+                    borderRadius: BorderRadius.circular(4),
+                    border: const Border(
+                      left: BorderSide(color: AppColors.sosRed, width: 4.0),
+                      top: BorderSide(color: AppColors.border, width: 1.0),
+                      right: BorderSide(color: AppColors.border, width: 1.0),
+                      bottom: BorderSide(color: AppColors.border, width: 1.0),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppColors.sosRedBg,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(Icons.description_outlined, color: AppColors.sosRed, size: 20),
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'AI-Generated Incident Report',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary),
+                          const Icon(Icons.description_outlined, color: AppColors.sosRed, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'AI INCIDENT DISPATCH REPORT',
+                            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
                           ),
                         ],
                       ),
-                      const Divider(height: 24),
+                      const Divider(height: 20, color: AppColors.border),
                       SelectableText(
                         summaryText,
-                        style: const TextStyle(
-                          fontSize: 13,
+                        style: GoogleFonts.ibmPlexMono(
+                          fontSize: 12,
                           height: 1.5,
-                          fontFamily: 'monospace',
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -137,101 +138,106 @@ class _SosEscalationScreenState extends ConsumerState<SosEscalationScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                // 3. Simulated Contact Notification View
-                const Text(
-                  'Emergency Contact Notifications (Simulated)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                // 3. Contact Notification Table View
+                Text(
+                  'EMERGENCY NETWORK NOTIFICATIONS (SIMULATED)',
+                  style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0.8),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 const Text(
-                  'In production, the following SMS message with live GPS track link would be sent immediately:',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  'Automated SMS payloads dispatched to registered contacts:',
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
                 if (contacts.isEmpty)
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.border, width: 1.0),
                     ),
-                    child: const Text('No contacts configured. Go to Settings to add emergency contacts.'),
+                    child: const Text('No contacts configured.'),
                   )
                 else
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: contacts.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final c = contacts[index];
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.sms_outlined, color: AppColors.primary, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'SMS to ${c.name} (${c.phone})',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                ),
-                                const Spacer(),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.safeGreenBg,
-                                    borderRadius: BorderRadius.circular(4),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.border, width: 1.0),
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: contacts.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
+                      itemBuilder: (context, index) {
+                        final c = contacts[index];
+                        return Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.sms_outlined, color: AppColors.primary, size: 16),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${c.name} (${c.phone})',
+                                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13),
                                   ),
-                                  child: const Text(
-                                    'SENT (SIMULATED)',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.safeGreen),
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.safeGreenBg,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: AppColors.safeGreenBorder, width: 1.0),
+                                    ),
+                                    child: Text(
+                                      'DISPATCHED',
+                                      style: GoogleFonts.ibmPlexMono(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.safeGreen),
+                                    ),
                                   ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceVariant,
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceVariant,
-                                borderRadius: BorderRadius.circular(8),
+                                child: Text(
+                                  '🚨 GEKKO ALERT: ${c.name}, emergency SOS triggered for your contact during a ${journey?.mode.label ?? 'Walking'} journey to ${journey?.destinationName ?? 'destination'}. Live map: https://gekko.app/track/${journey?.id ?? '12345'}',
+                                  style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.textPrimary, height: 1.4),
+                                ),
                               ),
-                              child: Text(
-                                '🚨 GEKKO SAFETY ALERT: ${c.name}, emergency SOS triggered for your contact during a ${journey?.mode.label ?? 'Walking'} journey to ${journey?.destinationName ?? 'destination'}. Live map & coordinates: https://gekko.app/track/${journey?.id ?? '12345'}',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textPrimary, height: 1.4),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // 4. Cancel / Safe Button
                 SizedBox(
-                  height: 52,
+                  height: 48,
                   child: ElevatedButton.icon(
                     onPressed: _cancelEscalation,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueGrey.shade800,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.primary,
                     ),
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('I Am Safe — Deescalate Emergency', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: Text(
+                      'I AM SAFE — DEESCALATE EMERGENCY',
+                      style: GoogleFonts.spaceGrotesk(fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
               ],

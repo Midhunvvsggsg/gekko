@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../models/journey.dart';
 import '../models/journey_mode_config.dart';
@@ -24,18 +25,41 @@ class HomeScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppColors.border, width: 1.0),
               ),
-              child: const Icon(Icons.shield_outlined, color: AppColors.primary, size: 24),
+              child: const Icon(Icons.shield_outlined, color: AppColors.textPrimary, size: 20),
             ),
             const SizedBox(width: 10),
-            const Text('GEKKO', style: TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.w800)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'GEKKO',
+                  style: GoogleFonts.spaceGrotesk(
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  'SAFETY DISPATCH CONSOLE',
+                  style: GoogleFonts.ibmPlexMono(
+                    letterSpacing: 0.8,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(Icons.settings_outlined, color: AppColors.textPrimary, size: 20),
             tooltip: 'Settings',
             onPressed: () => context.push('/settings'),
           ),
@@ -43,7 +67,7 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
@@ -53,45 +77,46 @@ class HomeScreen extends ConsumerWidget {
                 // Active Journey Alert Banner (if journey in progress)
                 if (activeJourney != null && activeJourney.status != JourneyStatus.completed) ...[
                   _buildActiveJourneyCard(context, activeJourney),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
 
-                // Main Hero Section
+                // Main Dispatch Hero Section
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.border, width: 1.0),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
+                          // Console Status Tag: Left green border, white bg, dark text
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryContainer,
-                              borderRadius: BorderRadius.circular(20),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.all(Radius.circular(2)),
+                              border: Border(
+                                left: BorderSide(color: AppColors.safeGreen, width: 4.0),
+                                top: BorderSide(color: AppColors.border, width: 1.0),
+                                right: BorderSide(color: AppColors.border, width: 1.0),
+                                bottom: BorderSide(color: AppColors.border, width: 1.0),
+                              ),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
-                                Icon(Icons.check_circle, size: 14, color: AppColors.primary),
-                                SizedBox(width: 6),
+                                const Icon(Icons.circle, size: 6, color: AppColors.safeGreen),
+                                const SizedBox(width: 6),
                                 Text(
-                                  'AI Safety Engine Ready',
-                                  style: TextStyle(
-                                    fontSize: 12,
+                                  'DISPATCH ENGINE ACTIVE',
+                                  style: GoogleFonts.ibmPlexMono(
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
+                                    color: AppColors.textPrimary,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ],
@@ -99,43 +124,56 @@ class HomeScreen extends ConsumerWidget {
                           ),
                           const Spacer(),
                           Text(
-                            contacts.isEmpty ? '⚠️ Add Contacts' : '👥 ${contacts.length} Contacts Active',
-                            style: const TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w500),
+                            contacts.isEmpty ? 'NO CONTACTS' : '${contacts.length} CONTACTS CONFIGURED',
+                            style: GoogleFonts.ibmPlexMono(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Initialize Safety Journey Monitoring',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Select transport profile to activate real-time GPS instrumentation and conversational AI check-in scheduler.',
+                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Where are you heading today?',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Set up a monitored walking, transit, or rideshare journey with automatic Gemini AI safety check-ins.',
-                        style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                      ),
-                      const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
-                        height: 52,
+                        height: 44,
                         child: ElevatedButton.icon(
                           onPressed: () => context.push('/setup'),
-                          icon: const Icon(Icons.navigation_rounded, size: 20),
-                          label: const Text('Start Monitored Journey', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          icon: const Icon(Icons.navigation_outlined, size: 18),
+                          label: const Text('Start Monitored Journey'),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Quick Action Shortcuts Grid
-                const Text(
-                  'Quick Actions',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                Text(
+                  'DISPATCH CONTROLS',
+                  style: GoogleFonts.ibmPlexMono(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: 0.8,
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -144,109 +182,125 @@ class HomeScreen extends ConsumerWidget {
                       crossAxisCount: isWide ? 3 : 1,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: isWide ? 1.6 : 3.0,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: isWide ? 1.8 : 3.2,
                       children: [
                         _buildQuickActionTile(
                           context,
-                          icon: Icons.phone_callback_rounded,
+                          icon: Icons.phone_callback_outlined,
                           title: 'Fake Call Exit',
-                          subtitle: 'Simulate realistic phone call to exit uncomfortable situations',
+                          subtitle: 'Simulate emergency call playback',
                           onTap: () => context.push('/fake-call'),
-                          color: Colors.blue.shade800,
                         ),
                         _buildQuickActionTile(
                           context,
-                          icon: Icons.contacts_rounded,
+                          icon: Icons.contacts_outlined,
                           title: 'Emergency Contacts',
-                          subtitle: '${contacts.length} contacts configured for SMS/SOS alerts',
+                          subtitle: '${contacts.length} network recipients',
                           onTap: () => context.push('/contacts'),
-                          color: AppColors.primary,
                         ),
                         _buildQuickActionTile(
                           context,
-                          icon: Icons.security_rounded,
+                          icon: Icons.shield_outlined,
                           title: 'Duress Safety',
-                          subtitle: 'Secret phrase: "${duressPhrase.isEmpty ? 'Not set' : duressPhrase}"',
+                          subtitle: 'Phrase: "${duressPhrase.isEmpty ? 'Not set' : duressPhrase}"',
                           onTap: () => context.push('/settings'),
-                          color: Colors.blueGrey.shade700,
                         ),
                       ],
                     );
                   },
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
-                // Monitoring Modes Overview
-                const Text(
-                  'Supported Monitoring Engines',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                // Monitoring Modes Structured Table Block
+                Text(
+                  'SUPPORTED MONITORING PROFILES',
+                  style: GoogleFonts.ibmPlexMono(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: 0.8,
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: JourneyModeConfig.defaultModes.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final mode = JourneyModeConfig.defaultModes[index];
-                    return Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceVariant,
-                              borderRadius: BorderRadius.circular(8),
+                // Single Structured Table Block with Hairline Dividers
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.border, width: 1.0),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: JourneyModeConfig.defaultModes.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
+                    itemBuilder: (context, index) {
+                      final mode = JourneyModeConfig.defaultModes[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppColors.border, width: 1.0),
+                              ),
+                              child: Icon(mode.icon, color: AppColors.textPrimary, size: 18),
                             ),
-                            child: Icon(mode.icon, color: AppColors.primary, size: 20),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      mode.label,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryContainer,
-                                        borderRadius: BorderRadius.circular(4),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        mode.label,
+                                        style: GoogleFonts.spaceGrotesk(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
-                                      child: Text(
-                                        'Every ${mode.checkInInterval.inMinutes}m',
-                                        style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
+                                      const SizedBox(width: 8),
+                                      // Monospace Rectangular Tag (4px max)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surfaceVariant,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: AppColors.border, width: 1.0),
+                                        ),
+                                        child: Text(
+                                          'INTERVAL: ${mode.checkInInterval.inMinutes}M',
+                                          style: GoogleFonts.ibmPlexMono(
+                                            fontSize: 10,
+                                            color: AppColors.textPrimary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  mode.modeDescription,
-                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    mode.modeDescription,
+                                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -258,51 +312,49 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildActiveJourneyCard(BuildContext context, Journey journey) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(4),
+        border: const Border(
+          left: BorderSide(color: AppColors.primary, width: 4.0),
+          top: BorderSide(color: AppColors.border, width: 1.0),
+          right: BorderSide(color: AppColors.border, width: 1.0),
+          bottom: BorderSide(color: AppColors.border, width: 1.0),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.navigation, color: AppColors.primary, size: 28),
-          const SizedBox(width: 14),
+          const Icon(Icons.navigation_outlined, color: AppColors.primary, size: 22),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'JOURNEY IN PROGRESS • ${journey.mode.label.toUpperCase()}',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primary, letterSpacing: 0.8),
-                    ),
-                  ],
+                Text(
+                  'ACTIVE JOURNEY • ${journey.mode.label.toUpperCase()}',
+                  style: GoogleFonts.ibmPlexMono(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                    letterSpacing: 0.8,
+                  ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   'En route to ${journey.destinationName}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary),
+                  style: GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
           ),
-          ElevatedButton(
+          OutlinedButton(
             onPressed: () => context.push('/active'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            ),
-            child: const Text('View Live Map', style: TextStyle(fontSize: 13)),
+            child: const Text('View Console'),
           ),
         ],
       ),
@@ -315,42 +367,54 @@ class HomeScreen extends ConsumerWidget {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
-    required Color color,
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(4),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: AppColors.border, width: 1.0),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
+            // Plain line icon in square container with 1px border (NO pastel background block)
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppColors.border, width: 1.0),
+              ),
+              child: Icon(icon, color: AppColors.textPrimary, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
+                    style: GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: AppColors.textPrimary,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

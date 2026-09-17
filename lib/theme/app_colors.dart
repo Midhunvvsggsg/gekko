@@ -1,37 +1,43 @@
 import 'package:flutter/material.dart';
 
+/// Control-Room / Dispatch Console Color Tokens
 class AppColors {
-  // Brand Primary Accent - Calm & Trustworthy Teal/Blue
-  static const Color primary = Color(0xFF0F766E); // Deep Teal
-  static const Color primaryContainer = Color(0xFFE6F4F1);
-  static const Color onPrimary = Colors.white;
+  // Primary Backgrounds
+  static const Color background = Color(0xFFF4F5F7); // Cool light gray (NOT white, NOT off-white cream)
+  static const Color surface = Color(0xFFFFFFFF); // White cards/surface
+  static const Color surfaceVariant = Color(0xFFEDF0F5); // Low-contrast dispatch container
+  static const Color border = Color(0xFFD8DCE3); // Solid divider / card border
+  static const Color hairlineBorder = Color(0x1A0E1A2B); // 10% opacity navy hairline
 
-  // Backgrounds & Neutral Surface Colors
-  static const Color background = Color(0xFFF8FAFC); // Slate-50 off-white
-  static const Color surface = Colors.white;
-  static const Color surfaceVariant = Color(0xFFF1F5F9); // Slate-100
-  static const Color border = Color(0xFFE2E8F0); // Slate-200
+  // Primary Typography
+  static const Color textPrimary = Color(0xFF0E1A2B); // Deep navy-charcoal, near-black
+  static const Color textSecondary = Color(0xFF4A5568); // Slate gray
+  static const Color textMuted = Color(0xFF718096);
 
-  // Typography Colors
-  static const Color textPrimary = Color(0xFF0F172A); // Slate-900 (High contrast)
-  static const Color textSecondary = Color(0xFF475569); // Slate-600
-  static const Color textMuted = Color(0xFF64748B); // Slate-500
+  // Brand & Action Accents
+  static const Color primary = Color(0xFF14304D); // Deep Navy Primary Action
+  static const Color primaryContainer = Color(0xFFE2E8F0);
+  static const Color onPrimary = Color(0xFFFFFFFF);
+  static const Color accentSecondary = Color(0xFF3B6E91); // Steel blue
 
-  // Reserved ONLY for Emergency/Alert/SOS states
-  static const Color sosRed = Color(0xFFDC2626); // Red-600
-  static const Color sosRedBg = Color(0xFFFEF2F2); // Red-50
-  static const Color sosRedBorder = Color(0xFFFCA5A5); // Red-300
+  // WARNING State ONLY (Uncertain / Degraded)
+  static const Color warningAmber = Color(0xFFC77A1F); // Amber (NOT yellow)
+  static const Color warningBg = Color(0xFFFFFBEB);
+  static const Color warningBorder = Color(0xFFFCD34D);
 
-  // Status & Classification Badges
-  static const Color safeGreen = Color(0xFF166534); // Green-800
-  static const Color safeGreenBg = Color(0xFFF0FDF4); // Green-50
+  // DANGER / SOS State ONLY (Escalation, Alerts)
+  static const Color sosRed = Color(0xFFB3261E); // Deep Red (NOT bright/cartoonish)
+  static const Color sosRedBg = Color(0xFFFEF2F2);
+  static const Color sosRedBorder = Color(0xFFFCA5A5);
+
+  // SUCCESS / Safe State ONLY (Used sparingly, confirmation only)
+  static const Color safeGreen = Color(0xFF1E6B4F); // Deep Forest Green (NOT mint/teal)
+  static const Color safeGreenBg = Color(0xFFF0FDF4);
   static const Color safeGreenBorder = Color(0xFF86EFAC);
 
-  static const Color uncertainYellow = Color(0xFF854D0E); // Yellow-800
-  static const Color uncertainYellowBg = Color(0xFFFEFCE8); // Yellow-50
-  static const Color uncertainYellowBorder = Color(0xFFFDE047);
-
-  static const Color concerningOrange = Color(0xFF9A3412); // Orange-800
-  static const Color concerningOrangeBg = Color(0xFFFFEDD5); // Orange-50
-  static const Color concerningOrangeBorder = Color(0xFFFDBA74);
+  // Deprecated color alias mapping for clean compile compatibility
+  static const Color cyanAccent = Color(0xFF3B6E91);
+  static const Color uncertainYellow = Color(0xFFC77A1F);
+  static const Color uncertainYellowBg = Color(0xFFFFFBEB);
+  static const Color uncertainYellowBorder = Color(0xFFFCD34D);
 }

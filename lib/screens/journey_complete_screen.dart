@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../providers/journey_provider.dart';
 
@@ -14,75 +15,75 @@ class JourneyCompleteScreen extends ConsumerWidget {
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
-                    color: AppColors.safeGreenBg,
-                    shape: BoxShape.circle,
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.safeGreenBg,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.safeGreenBorder, width: 1.0),
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outlined,
+                      size: 48,
+                      color: AppColors.safeGreen,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.check_circle_rounded,
-                    size: 72,
-                    color: AppColors.safeGreen,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'JOURNEY COMPLETED SAFELY',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: 0.5,
                   ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Safety monitoring for journey to ${journey?.destinationName ?? 'destination'} has concluded.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Arrived Safely!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Your ${journey?.mode.label ?? 'Safety'} journey to ${journey?.destinationName ?? 'destination'} has successfully completed.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 15, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 32),
 
-                // Journey Statistics Summary Card
+                // Instrumentation Summary Card
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.border, width: 1.0),
                   ),
-                  child: Column(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildStatColumn('Check-Ins Cleared', '${journey?.checkIns.length ?? 1}', Icons.fact_check_outlined),
-                          _buildStatColumn('Mode', journey?.mode.label ?? 'Walking', Icons.directions_walk),
-                          _buildStatColumn('Safety Score', '100%', Icons.shield_outlined),
-                        ],
-                      ),
+                      _buildStatColumn('CHECK-INS CLEARED', '${journey?.checkIns.length ?? 1}', Icons.fact_check_outlined),
+                      _buildStatColumn('MODE PROFILE', journey?.mode.label ?? 'Walking', Icons.directions_walk),
+                      _buildStatColumn('SAFETY STATUS', 'SAFE', Icons.shield_outlined),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 SizedBox(
-                  height: 52,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: () {
                       ref.read(journeyProvider.notifier).cancelJourney();
                       context.go('/home');
                     },
-                    child: const Text('Back to Home', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: const Text('Return to Dispatch Console'),
                   ),
                 ),
               ],
@@ -96,16 +97,16 @@ class JourneyCompleteScreen extends ConsumerWidget {
   Widget _buildStatColumn(String label, String value, IconData icon) {
     return Column(
       children: [
-        Icon(icon, color: AppColors.primary, size: 24),
-        const SizedBox(height: 6),
+        Icon(icon, color: AppColors.primary, size: 20),
+        const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+          style: GoogleFonts.ibmPlexMono(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+          style: GoogleFonts.ibmPlexMono(fontSize: 9, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
         ),
       ],
     );

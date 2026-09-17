@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../services/speech_service.dart';
 
@@ -41,7 +42,6 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
       }
     });
 
-    // Play TTS script
     SpeechService.speak(_callScript);
   }
 
@@ -59,7 +59,7 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
     final secs = (_callDurationSeconds % 60).toString().padLeft(2, '0');
 
     return Scaffold(
-      backgroundColor: const Color(0xFF020617),
+      backgroundColor: AppColors.textPrimary, // #0E1A2B Deep Navy Charcoal
       body: SafeArea(
         child: Column(
           children: [
@@ -67,62 +67,62 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
 
             // Caller Avatar & Info
             Container(
-              width: 100,
-              height: 100,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF334155), width: 2),
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppColors.border, width: 1.0),
               ),
-              child: const Icon(Icons.person, size: 64, color: Colors.white70),
+              child: const Icon(Icons.person_outlined, size: 48, color: Colors.white70),
             ),
 
-            const SizedBox(height: 20),
-
-            const Text(
-              'Mom (Safety Dispatch)',
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
 
             Text(
-              _isCallActive ? '$mins:$secs' : 'Incoming Gekko Safety Call...',
-              style: TextStyle(
-                fontSize: 16,
-                color: _isCallActive ? Colors.green.shade400 : Colors.white70,
-                fontWeight: FontWeight.w500,
+              'Mom (Safety Dispatch)',
+              style: GoogleFonts.spaceGrotesk(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+
+            const SizedBox(height: 6),
+
+            Text(
+              _isCallActive ? '$mins:$secs' : 'INCOMING EMERGENCY EXIT CALL...',
+              style: GoogleFonts.ibmPlexMono(
+                fontSize: 13,
+                color: _isCallActive ? AppColors.safeGreenBorder : Colors.white70,
+                fontWeight: FontWeight.w600,
               ),
             ),
 
             if (_isCallActive) ...[
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                margin: const EdgeInsets.symmetric(horizontal: 32),
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF1E293B)),
+                  color: AppColors.surface.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.white24, width: 1.0),
                 ),
                 child: Column(
                   children: [
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.graphic_eq, color: Colors.green, size: 24),
-                        SizedBox(width: 8),
+                        const Icon(Icons.graphic_eq, color: AppColors.safeGreenBorder, size: 18),
+                        const SizedBox(width: 8),
                         Text(
-                          'Audio Playing via Browser TTS',
-                          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                          'Audio Telemetry Active',
+                          style: GoogleFonts.ibmPlexMono(color: AppColors.safeGreenBorder, fontWeight: FontWeight.w700, fontSize: 12),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Text(
                       '"$_callScript"',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontStyle: FontStyle.italic),
+                      style: GoogleFonts.ibmPlexMono(color: Colors.white70, fontSize: 11),
                     ),
                   ],
                 ),
@@ -131,34 +131,34 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
 
             const Spacer(),
 
-            // Call Action Buttons
+            // Call Action Buttons (Rectangular 4px max)
             Padding(
-              padding: const EdgeInsets.only(bottom: 48),
+              padding: const EdgeInsets.only(bottom: 40),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   if (!_isCallActive) ...[
                     // Decline Button
                     _buildCallActionButton(
-                      icon: Icons.call_end,
+                      icon: Icons.call_end_outlined,
                       color: AppColors.sosRed,
-                      label: 'Decline',
+                      label: 'DECLINE',
                       onTap: _endCall,
                     ),
 
                     // Accept Button
                     _buildCallActionButton(
-                      icon: Icons.call,
-                      color: Colors.green.shade600,
-                      label: 'Accept',
+                      icon: Icons.call_outlined,
+                      color: AppColors.safeGreen,
+                      label: 'ACCEPT',
                       onTap: _acceptCall,
                     ),
                   ] else ...[
                     // End Call Button
                     _buildCallActionButton(
-                      icon: Icons.call_end,
+                      icon: Icons.call_end_outlined,
                       color: AppColors.sosRed,
-                      label: 'End Call',
+                      label: 'END CALL',
                       onTap: _endCall,
                     ),
                   ],
@@ -182,21 +182,21 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
       children: [
         InkWell(
           onTap: onTap,
-          customBorder: const CircleBorder(),
+          borderRadius: BorderRadius.circular(4),
           child: Container(
-            width: 72,
-            height: 72,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
               color: color,
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(4),
             ),
-            child: Icon(icon, color: Colors.white, size: 32),
+            child: Icon(icon, color: Colors.white, size: 28),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           label,
-          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+          style: GoogleFonts.ibmPlexMono(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
         ),
       ],
     );

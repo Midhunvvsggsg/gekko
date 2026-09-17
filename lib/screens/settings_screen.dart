@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../providers/settings_provider.dart';
 
@@ -36,7 +37,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     notifier.updateApiKey(_apiKeyController.text.trim());
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Settings saved successfully!')),
+      const SnackBar(content: Text('Console settings saved.')),
     );
   }
 
@@ -47,14 +48,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Safety & App Settings'),
+        title: Text(
+          'DISPATCH CONSOLE CONFIGURATION',
+          style: GoogleFonts.spaceGrotesk(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
@@ -62,66 +66,74 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 1. Silent Duress Phrase Section
-                const Text(
-                  '1. Silent Duress Phrase',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                Text(
+                  '1. SILENT DURESS PHRASE',
+                  style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0.8),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 const Text(
-                  'If forced to respond to a check-in under threat, inclusion of this secret phrase will silently trigger emergency escalation without revealing danger on-screen.',
+                  'Inclusion of this keyword in any check-in response silently dispatches emergency escalation without visual alert changes.',
                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 TextField(
                   controller: _duressController,
+                  style: GoogleFonts.ibmPlexSans(fontSize: 13),
                   decoration: const InputDecoration(
-                    labelText: 'Secret Duress Phrase / Keyword',
+                    labelText: 'Secret Duress Keyword',
                     hintText: 'e.g. pineapple, everything is fine',
-                    prefixIcon: Icon(Icons.lock_outline, color: AppColors.primary),
+                    prefixIcon: Icon(Icons.lock_outlined, color: AppColors.textPrimary, size: 18),
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // 2. Gemini AI Integration Settings
-                const Text(
-                  '2. Gemini AI Integration',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                Text(
+                  '2. GEMINI AI TELEMETRY ENGINE',
+                  style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0.8),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 const Text(
-                  'Enter a Gemini API Key to use live Gemini 2.0 Flash models for check-in classification and incident summaries.',
+                  'Configure Gemini 2.0 Flash REST endpoint key for real-time natural language check-in classification and incident summary dispatches.',
                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
+                // Rectangular Status Tag with Left Border Accent
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: hasApiKey ? AppColors.safeGreenBg : AppColors.surfaceVariant,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: hasApiKey ? AppColors.safeGreenBorder : AppColors.border,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border(
+                      left: BorderSide(
+                        color: hasApiKey ? AppColors.safeGreen : AppColors.textSecondary,
+                        width: 4.0,
+                      ),
+                      top: const BorderSide(color: AppColors.border, width: 1.0),
+                      right: const BorderSide(color: AppColors.border, width: 1.0),
+                      bottom: const BorderSide(color: AppColors.border, width: 1.0),
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        hasApiKey ? Icons.check_circle : Icons.info_outline,
-                        color: hasApiKey ? AppColors.safeGreen : AppColors.textMuted,
-                        size: 20,
+                        hasApiKey ? Icons.check_circle_outlined : Icons.info_outlined,
+                        color: hasApiKey ? AppColors.safeGreen : AppColors.textSecondary,
+                        size: 18,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           hasApiKey
-                              ? 'Gemini API Key configured and active.'
-                              : 'No API Key entered. Offline mode-aware AI fallback active.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: hasApiKey ? AppColors.safeGreen : AppColors.textSecondary,
+                              ? 'GEMINI REST TELEMETRY: KEY ACTIVE'
+                              : 'GEMINI REST TELEMETRY: DUAL-LAYER FALLBACK ENGINE ACTIVE',
+                          style: GoogleFonts.ibmPlexMono(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: hasApiKey ? AppColors.safeGreen : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -129,27 +141,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 TextField(
                   controller: _apiKeyController,
                   obscureText: true,
+                  style: GoogleFonts.ibmPlexMono(fontSize: 13),
                   decoration: const InputDecoration(
                     labelText: 'Gemini API Key',
                     hintText: 'AIzaSy...',
-                    prefixIcon: Icon(Icons.vpn_key_outlined, color: AppColors.primary),
+                    prefixIcon: Icon(Icons.vpn_key_outlined, color: AppColors.textPrimary, size: 18),
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
-                // Save Button
+                // Save Button (4px max rectangular navy button)
                 SizedBox(
-                  height: 50,
+                  height: 48,
                   child: ElevatedButton.icon(
                     onPressed: _saveSettings,
-                    icon: const Icon(Icons.save_outlined),
-                    label: const Text('Save Settings', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.save_outlined, size: 18),
+                    label: Text(
+                      'SAVE CONFIGURATION',
+                      style: GoogleFonts.spaceGrotesk(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                    ),
                   ),
                 ),
               ],
