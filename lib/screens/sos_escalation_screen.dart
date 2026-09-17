@@ -7,6 +7,8 @@ import '../theme/app_colors.dart';
 import '../providers/journey_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/settings_provider.dart';
+import '../models/sos_hop_packet.dart';
+import '../providers/mesh_relay_provider.dart';
 
 class SosEscalationScreen extends ConsumerStatefulWidget {
   const SosEscalationScreen({super.key});
@@ -260,6 +262,9 @@ class _SosEscalationScreenState extends ConsumerState<SosEscalationScreen> {
                   ],
                 ],
 
+                // P2P Mesh Network SOS Hopping Telemetry Card
+                _buildP2pMeshTelemetryCard(context, ref),
+
                 const SizedBox(height: 20),
 
                 // 4. Contacts Notified Panel with Simulated SMS Payload Text
@@ -386,6 +391,206 @@ class _SosEscalationScreenState extends ConsumerState<SosEscalationScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildP2pMeshTelemetryCard(BuildContext context, WidgetRef ref) {
+    final meshState = ref.watch(meshRelayProvider);
+    final packet = meshState.activePacket;
+
+    if (packet == null) return const SizedBox.shrink();
+
+    final statusText = packet.status == SosHopStatus.towerDelivered
+        ? 'DELIVERED TO CELL TOWER'
+        : (packet.status == SosHopStatus.relaying
+            ? 'RELAYING THROUGH PEER MESH'
+            : 'OFFLINE BROADCASTING');
+
+    final statusColor = packet.status == SosHopStatus.towerDelivered
+        ? AppColors.safeGreen
+        : (packet.status == SosHopStatus.relaying ? AppColors.primary : AppColors.warningAmber);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        Text(
+          'OFFLINE P2P MESH DISPATCH (DELAY-TOLERANT NETWORK)',
+          style: GoogleFonts.ibmPlexMono(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: AppColors.border, width: 1.0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(Icons.hub_outlined, color: AppColors.primary, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'PACKET ID: ${packet.packetId}',
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'STORE-AND-FORWARD P2P HOPPING ENGINE',
+                          style: GoogleFonts.ibmPlexMono(fontSize: 10, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: statusColor, width: 1.0),
+                    ),
+                    child: Text(
+                      statusText,
+                      style: GoogleFonts.ibmPlexMono(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 20, color: AppColors.border),
+
+              // Hop trajectory list graph
+              Text(
+                'DEVICE HOP TRAJECTORY (${packet.hopCount} HOPS TAKEN):',
+                style: GoogleFonts.ibmPlexMono(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: packet.hopHistory.length,
+                separatorBuilder: (_, __) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.south, size: 14, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'P2P BLE / Mesh Packet Transfer',
+                        style: GoogleFonts.ibmPlexMono(fontSize: 9, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                itemBuilder: (context, idx) {
+                  final node = packet.hopHistory[idx];
+                  IconData nodeIcon = Icons.smartphone;
+                  if (node.nodeType.contains('Vehicle')) {
+                    nodeIcon = Icons.directions_car;
+                  } else if (node.nodeType.contains('Transit') || node.nodeType.contains('Repeater')) {
+                    nodeIcon = Icons.router;
+                  } else if (node.nodeType.contains('Tower') || node.nodeType.contains('Gateway')) {
+                    nodeIcon = Icons.cell_tower;
+                  }
+
+                  return Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.border, width: 1.0),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(nodeIcon, size: 18, color: AppColors.textPrimary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                node.nodeLabel,
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                '${node.nodeType} • ${node.nodeId}',
+                                style: GoogleFonts.ibmPlexMono(fontSize: 10, color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '${node.timestamp.minute.toString().padLeft(2, '0')}:${node.timestamp.second.toString().padLeft(2, '0')}',
+                          style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 14),
+
+              // Simulation trigger button
+              SizedBox(
+                width: double.infinity,
+                height: 40,
+                child: OutlinedButton.icon(
+                  onPressed: packet.status == SosHopStatus.towerDelivered
+                      ? null
+                      : () {
+                          ref.read(meshRelayProvider.notifier).simulateHop();
+                        },
+                  icon: const Icon(Icons.sensors, size: 16),
+                  label: Text(
+                    packet.status == SosHopStatus.towerDelivered
+                        ? 'CELL TOWER GATEWAY REACHED (DELIVERED)'
+                        : 'SIMULATE P2P DEVICE HOP (STORE & FORWARD)',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

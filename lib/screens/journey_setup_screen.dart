@@ -18,8 +18,7 @@ class JourneySetupScreen extends ConsumerStatefulWidget {
 
 class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   JourneyModeConfig _selectedMode = JourneyModeConfig.defaultModes[0]; // Walking
-  final TextEditingController _destinationController =
-      TextEditingController(text: 'Market St & 4th St, San Francisco, CA');
+  final TextEditingController _destinationController = TextEditingController();
   late TextEditingController _durationController;
   LatLng _selectedLatLng = LocationService.destinationSF1;
   int _expectedDurationMinutes = 20;
@@ -229,7 +228,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                   },
                   decoration: InputDecoration(
                     labelText: 'Destination Address or Landmark',
-                    hintText: 'e.g. Union Square, San Francisco',
+                    hintText: 'e.g. Market St & 4th St, San Francisco, CA',
                     prefixIcon: const Icon(Icons.place_outlined, color: AppColors.textPrimary, size: 20),
                     suffixIcon: _isSearchingLocation
                         ? const Padding(

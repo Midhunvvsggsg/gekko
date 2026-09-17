@@ -8,6 +8,7 @@ import '../services/ai_service.dart';
 import '../services/location_service.dart';
 import '../services/journey_sync_service.dart';
 import '../services/speed_classifier_service.dart';
+import '../services/mesh_relay_service.dart';
 import 'ai_provider.dart';
 import 'settings_provider.dart';
 import 'stealth_provider.dart';
@@ -15,6 +16,7 @@ import 'stealth_provider.dart';
 class JourneyStateNotifier extends StateNotifier<Journey?> {
   final AIService _aiService;
   final JourneySyncService _syncService;
+  final MeshRelayService _meshService;
   final String _duressPhrase;
   final bool _isDemoMode;
   final bool _isStealthModeActive;
@@ -30,6 +32,7 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
   JourneyStateNotifier(
     this._aiService,
     this._syncService,
+    this._meshService,
     this._duressPhrase,
     this._isDemoMode,
     this._isStealthModeActive,
@@ -397,6 +400,12 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
       incidentSummary: summary,
     );
     await _syncService.publishJourney(state!);
+
+    // Initialize offline P2P delay-tolerant mesh packet
+    await _meshService.createSosPacket(
+      journey: state!,
+      triggerSource: triggerSource,
+    );
   }
 
   Future<void> completeJourney() async {
@@ -430,8 +439,9 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
 final journeyProvider = StateNotifierProvider<JourneyStateNotifier, Journey?>((ref) {
   final aiService = ref.watch(aiServiceProvider);
   final syncService = ref.watch(journeySyncServiceProvider);
+  final meshService = ref.watch(meshRelayServiceProvider);
   final duressPhrase = ref.watch(settingsProvider.select((s) => s.duressPhrase));
   final isDemoMode = ref.watch(settingsProvider.select((s) => s.isDemoMode));
   final isStealthModeActive = ref.watch(stealthProvider.select((s) => s.isStealthModeActive));
-  return JourneyStateNotifier(aiService, syncService, duressPhrase, isDemoMode, isStealthModeActive);
+  return JourneyStateNotifier(aiService, syncService, meshService, duressPhrase, isDemoMode, isStealthModeActive);
 });
