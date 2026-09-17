@@ -17,7 +17,7 @@ class JourneySetupScreen extends ConsumerStatefulWidget {
 
 class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   JourneyModeConfig _selectedMode = JourneyModeConfig.defaultModes[0]; // Walking
-  final TextEditingController _destinationController = TextEditingController(text: 'Union Square, San Francisco');
+  final TextEditingController _destinationController = TextEditingController();
   LatLng _selectedLatLng = LocationService.destinationSF1;
   int _expectedDurationMinutes = 20;
 
@@ -101,9 +101,13 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   }
 
   void _onStartJourney() {
+    final destName = _destinationController.text.trim().isEmpty
+        ? 'Union Square, San Francisco'
+        : _destinationController.text.trim();
+
     ref.read(journeyProvider.notifier).startJourney(
           mode: _selectedMode,
-          destinationName: _destinationController.text,
+          destinationName: destName,
           destinationLatLng: _selectedLatLng,
           expectedDuration: Duration(minutes: _expectedDurationMinutes),
         );
@@ -201,8 +205,17 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
 
                 TextField(
                   controller: _destinationController,
+                  onTap: () {
+                    if (_destinationController.text.isNotEmpty) {
+                      _destinationController.selection = TextSelection(
+                        baseOffset: 0,
+                        extentOffset: _destinationController.text.length,
+                      );
+                    }
+                  },
                   decoration: InputDecoration(
                     labelText: 'Destination Name or Address',
+                    hintText: 'e.g. Union Square, San Francisco',
                     prefixIcon: const Icon(Icons.place_outlined, color: AppColors.primary),
                     suffixIcon: _isSearchingLocation
                         ? const Padding(
