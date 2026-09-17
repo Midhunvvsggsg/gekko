@@ -282,7 +282,7 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
                               color: journey.isDeviated ? AppColors.sosRed : AppColors.textSecondary,
                             ),
                             label: Text(
-                              journey.isDeviated ? 'Normal Route' : 'Simulate Off-Route',
+                              journey.isDeviated ? 'Normal Route' : 'Test Safety Trigger',
                               style: GoogleFonts.ibmPlexMono(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,

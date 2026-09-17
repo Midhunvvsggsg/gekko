@@ -9,14 +9,27 @@ import '../providers/journey_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/settings_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _revealDuress = false;
+
+  @override
+  Widget build(BuildContext context) {
     final activeJourney = ref.watch(journeyProvider);
     final contacts = ref.watch(contactsProvider);
     final duressPhrase = ref.watch(settingsProvider.select((s) => s.duressPhrase));
+    final isDemoMode = ref.watch(settingsProvider.select((s) => s.isDemoMode));
+
+    final isDuressVisible = isDemoMode || _revealDuress;
+    final displayDuressText = duressPhrase.isEmpty
+        ? 'Not set'
+        : (isDuressVisible ? duressPhrase : '••••••••');
 
     return Scaffold(
       appBar: AppBar(
@@ -98,7 +111,6 @@ class HomeScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: const BoxDecoration(
                               color: AppColors.surface,
-                              borderRadius: BorderRadius.all(Radius.circular(2)),
                               border: Border(
                                 left: BorderSide(color: AppColors.safeGreen, width: 4.0),
                                 top: BorderSide(color: AppColors.border, width: 1.0),
@@ -204,7 +216,21 @@ class HomeScreen extends ConsumerWidget {
                           context,
                           icon: Icons.shield_outlined,
                           title: 'Duress Safety',
-                          subtitle: 'Phrase: "${duressPhrase.isEmpty ? 'Not set' : duressPhrase}"',
+                          subtitle: 'Phrase: "$displayDuressText"',
+                          trailing: isDemoMode
+                              ? null
+                              : GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _revealDuress = !_revealDuress;
+                                    });
+                                  },
+                                  child: Icon(
+                                    isDuressVisible ? Icons.visibility_off : Icons.visibility,
+                                    size: 16,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
                           onTap: () => context.push('/settings'),
                         ),
                       ],
@@ -367,6 +393,7 @@ class HomeScreen extends ConsumerWidget {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    Widget? trailing,
   }) {
     return InkWell(
       onTap: onTap,
@@ -416,6 +443,10 @@ class HomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            if (trailing != null) ...[
+              const SizedBox(width: 4),
+              trailing,
+            ],
           ],
         ),
       ),

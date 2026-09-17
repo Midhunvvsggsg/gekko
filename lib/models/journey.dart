@@ -24,6 +24,7 @@ class Journey {
   final bool isDeviated;
   final String? incidentSummary;
   final String? riskBriefing;
+  final String? arrivalSummary;
 
   Journey({
     required this.id,
@@ -39,6 +40,7 @@ class Journey {
     this.isDeviated = false,
     this.incidentSummary,
     this.riskBriefing,
+    this.arrivalSummary,
   });
 
   Journey copyWith({
@@ -49,6 +51,7 @@ class Journey {
     bool? isDeviated,
     String? incidentSummary,
     String? riskBriefing,
+    String? arrivalSummary,
   }) {
     return Journey(
       id: id,
@@ -64,6 +67,7 @@ class Journey {
       isDeviated: isDeviated ?? this.isDeviated,
       incidentSummary: incidentSummary ?? this.incidentSummary,
       riskBriefing: riskBriefing ?? this.riskBriefing,
+      arrivalSummary: arrivalSummary ?? this.arrivalSummary,
     );
   }
 }

@@ -78,4 +78,15 @@ class StorageService {
   Future<void> saveApiKey(String key) async {
     await prefs.setString(_keyApiKey, key.trim());
   }
+
+  // --- Judge / Demo Mode ---
+  static const String _keyDemoMode = 'gekko_demo_mode';
+
+  bool getDemoMode() {
+    return prefs.getBool(_keyDemoMode) ?? false;
+  }
+
+  Future<void> saveDemoMode(bool enabled) async {
+    await prefs.setBool(_keyDemoMode, enabled);
+  }
 }

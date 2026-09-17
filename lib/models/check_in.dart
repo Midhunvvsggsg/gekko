@@ -8,11 +8,13 @@ class CheckInClassification {
   final CheckInStatus status;
   final String rationale;
   final bool duressDetected;
+  final String? rawJson;
 
   const CheckInClassification({
     required this.status,
     required this.rationale,
     required this.duressDetected,
+    this.rawJson,
   });
 
   Map<String, dynamic> toJson() {
@@ -20,10 +22,11 @@ class CheckInClassification {
       'status': status.name,
       'rationale': rationale,
       'duressDetected': duressDetected,
+      if (rawJson != null) 'rawJson': rawJson,
     };
   }
 
-  factory CheckInClassification.fromJson(Map<String, dynamic> json) {
+  factory CheckInClassification.fromJson(Map<String, dynamic> json, {String? rawJson}) {
     final statusStr = (json['status'] as String? ?? 'safe').toLowerCase();
     CheckInStatus parsedStatus;
     if (statusStr.contains('concerning') || statusStr.contains('danger') || statusStr.contains('escalat')) {
@@ -38,6 +41,7 @@ class CheckInClassification {
       status: parsedStatus,
       rationale: json['rationale'] as String? ?? 'Check-in processed successfully.',
       duressDetected: json['duressDetected'] as bool? ?? false,
+      rawJson: rawJson ?? json['rawJson'] as String?,
     );
   }
 }

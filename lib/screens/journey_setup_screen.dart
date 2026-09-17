@@ -18,7 +18,8 @@ class JourneySetupScreen extends ConsumerStatefulWidget {
 
 class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   JourneyModeConfig _selectedMode = JourneyModeConfig.defaultModes[0]; // Walking
-  final TextEditingController _destinationController = TextEditingController();
+  final TextEditingController _destinationController =
+      TextEditingController(text: 'Market St & 4th St, San Francisco, CA');
   LatLng _selectedLatLng = LocationService.destinationSF1;
   int _expectedDurationMinutes = 20;
 

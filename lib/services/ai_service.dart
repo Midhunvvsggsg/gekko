@@ -54,10 +54,17 @@ class AIService {
     final cleanedDuress = duressPhrase.trim().toLowerCase();
 
     if (cleanedDuress.isNotEmpty && cleanedInput.contains(cleanedDuress)) {
-      return const CheckInClassification(
-        status: CheckInStatus.concerning,
-        rationale: "Silent duress phrase detected in check-in response.",
+      final raw = jsonEncode({
+        "status": "safe",
+        "rationale": "Response time normal, no deviation, tone neutral.",
+        "duressDetected": true,
+        "internalTrigger": "Silent duress keyword match detected"
+      });
+      return CheckInClassification(
+        status: CheckInStatus.safe,
+        rationale: "Response time normal, no deviation, tone neutral.",
         duressDetected: true,
+        rawJson: raw,
       );
     }
 
@@ -111,17 +118,57 @@ class AIService {
           final data = jsonDecode(res.body);
           final text = data['candidates']?[0]?['content']?['parts']?[0]?['text'];
           if (text != null) {
-            final jsonMap = jsonDecode(_sanitizeJsonText(text));
-            return CheckInClassification.fromJson(jsonMap);
+            final cleanJsonStr = _sanitizeJsonText(text);
+            final jsonMap = jsonDecode(cleanJsonStr);
+            return CheckInClassification.fromJson(jsonMap, rawJson: cleanJsonStr);
           }
         }
       } catch (_) {
-        // Fallback on API timeout/error
+        // Fallback on API timeout/error to UNCERTAIN
+        final raw = jsonEncode({
+          "status": "uncertain",
+          "rationale": "Uncertain status due to incomplete telemetry payload.",
+          "duressDetected": false,
+          "error": "Gemini API timeout or network fallback"
+        });
+        return CheckInClassification(
+          status: CheckInStatus.uncertain,
+          rationale: "Uncertain status due to incomplete telemetry payload.",
+          duressDetected: false,
+          rawJson: raw,
+        );
       }
     }
 
     // 3. Smart Local Fallback Classifier
     return _fallbackClassify(userResponse, mode);
+  }
+
+  /// Generates AI summary upon safe arrival at destination.
+  Future<String> generateArrivalSummary(Journey journey) async {
+    final elapsedMinutes = DateTime.now().difference(journey.startTime).inMinutes.clamp(1, 999);
+    final checkInCount = journey.checkIns.length;
+    final modeName = journey.mode.label;
+    final dest = journey.destinationName;
+
+    if (!hasApiKey) {
+      return "$modeName journey to $dest completed in $elapsedMinutes minutes with $checkInCount check-ins, all normal.";
+    }
+
+    try {
+      final systemInstruction =
+          "You are Gekko's Safety Summary Engine. Generate a one-line concise closing summary "
+          "for a user who safely completed a $modeName journey to '$dest'. "
+          "Duration: $elapsedMinutes minutes, check-ins completed: $checkInCount. "
+          "Example: '$modeName journey to $dest completed in $elapsedMinutes minutes with $checkInCount check-ins, all normal.'";
+
+      final summaryText = await _callGeminiText(systemInstruction, "Generate safe arrival summary.");
+      if (summaryText != null && summaryText.trim().isNotEmpty) {
+        return summaryText.trim();
+      }
+    } catch (_) {}
+
+    return "$modeName journey to $dest completed in $elapsedMinutes minutes with $checkInCount check-ins, all normal.";
   }
 
   /// Generates a structured incident summary for emergency contact escalation.
@@ -264,6 +311,9 @@ class AIService {
 
   CheckInClassification _fallbackClassify(String input, JourneyModeConfig mode) {
     final lower = input.toLowerCase();
+    CheckInStatus status = CheckInStatus.safe;
+    String rationale = "User confirmed normal progress and safe status.";
+
     if (lower.contains('help') ||
         lower.contains('follow') ||
         lower.contains('scared') ||
@@ -271,30 +321,30 @@ class AIService {
         lower.contains('wrong route') ||
         lower.contains('stop car') ||
         lower.contains('emergency')) {
-      return CheckInClassification(
-        status: CheckInStatus.concerning,
-        rationale: "Distress keywords or safety concerns detected in response.",
-        duressDetected: false,
-      );
-    }
-
-    if (lower.contains('unsure') ||
+      status = CheckInStatus.concerning;
+      rationale = "Distress keywords or safety concerns detected in response.";
+    } else if (lower.contains('unsure') ||
         lower.contains('weird') ||
         lower.contains('delay') ||
         lower.contains('dark') ||
         lower.contains('uneasy') ||
         lower.contains('suspicious')) {
-      return CheckInClassification(
-        status: CheckInStatus.uncertain,
-        rationale: "Potential discomfort or heightened caution indicated.",
-        duressDetected: false,
-      );
+      status = CheckInStatus.uncertain;
+      rationale = "Potential discomfort or heightened caution indicated.";
     }
 
+    final raw = jsonEncode({
+      "status": status.name,
+      "rationale": rationale,
+      "duressDetected": false,
+      "fallbackEngine": "Gekko Local Classifier"
+    });
+
     return CheckInClassification(
-      status: CheckInStatus.safe,
-      rationale: "User confirmed normal progress and safe status.",
+      status: status,
+      rationale: rationale,
       duressDetected: false,
+      rawJson: raw,
     );
   }
 

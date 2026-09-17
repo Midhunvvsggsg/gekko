@@ -12,7 +12,18 @@ class JourneyCompleteScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final journey = ref.watch(journeyProvider);
 
+    final durationMins = journey != null
+        ? DateTime.now().difference(journey.startTime).inMinutes.clamp(1, 999)
+        : 18;
+    final checkInCount = journey?.checkIns.length ?? 2;
+    final dest = journey?.destinationName ?? 'Union Square, San Francisco';
+    final modeName = journey?.mode.label ?? 'Walking';
+
+    final aiSummaryText = journey?.arrivalSummary ??
+        "$modeName journey to $dest completed in $durationMins minutes with $checkInCount check-ins, all normal.";
+
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -22,24 +33,45 @@ class JourneyCompleteScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.safeGreenBg,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: AppColors.safeGreenBorder, width: 1.0),
-                    ),
-                    child: const Icon(
-                      Icons.check_circle_outlined,
-                      size: 48,
-                      color: AppColors.safeGreen,
+                // Green Left-Stripe Status Tag
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    border: Border(
+                      left: BorderSide(color: AppColors.safeGreen, width: 4.0),
+                      top: BorderSide(color: AppColors.border, width: 1.0),
+                      right: BorderSide(color: AppColors.border, width: 1.0),
+                      bottom: BorderSide(color: AppColors.border, width: 1.0),
                     ),
                   ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.safeGreenBg,
+                          borderRadius: BorderRadius.circular(2),
+                          border: Border.all(color: AppColors.safeGreenBorder, width: 1.0),
+                        ),
+                        child: Text(
+                          'JOURNEY COMPLETE',
+                          style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.safeGreen, letterSpacing: 0.8),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'STATUS // SAFE ARRIVAL',
+                        style: GoogleFonts.ibmPlexMono(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.safeGreen),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 20),
+
+                const SizedBox(height: 16),
+
                 Text(
-                  'JOURNEY COMPLETED SAFELY',
+                  'SAFE ARRIVAL CONFIRMED',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 22,
@@ -50,11 +82,12 @@ class JourneyCompleteScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Safety monitoring for journey to ${journey?.destinationName ?? 'destination'} has concluded.',
+                  'Safety monitoring instrumentation for journey to $dest has concluded.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 20),
 
                 // Instrumentation Summary Card
                 Container(
@@ -67,9 +100,34 @@ class JourneyCompleteScreen extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStatColumn('CHECK-INS CLEARED', '${journey?.checkIns.length ?? 1}', Icons.fact_check_outlined),
-                      _buildStatColumn('MODE PROFILE', journey?.mode.label ?? 'Walking', Icons.directions_walk),
-                      _buildStatColumn('SAFETY STATUS', 'SAFE', Icons.shield_outlined),
+                      _buildStatColumn('DURATION', '${durationMins}m', Icons.timer_outlined),
+                      _buildStatColumn('CHECK-INS', '$checkInCount', Icons.fact_check_outlined),
+                      _buildStatColumn('MODE', modeName, Icons.directions_walk),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // AI Closing Summary Card
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.border, width: 1.0),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.bolt, color: AppColors.safeGreen, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          aiSummaryText,
+                          style: GoogleFonts.ibmPlexMono(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w500, height: 1.4),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -83,7 +141,10 @@ class JourneyCompleteScreen extends ConsumerWidget {
                       ref.read(journeyProvider.notifier).cancelJourney();
                       context.go('/home');
                     },
-                    child: const Text('Return to Dispatch Console'),
+                    child: Text(
+                      'DONE — RETURN TO CONSOLE',
+                      style: GoogleFonts.spaceGrotesk(fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
               ],

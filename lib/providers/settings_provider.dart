@@ -9,22 +9,26 @@ class SettingsState {
   final String duressPhrase;
   final int checkInFreqOffsetMins;
   final String apiKey;
+  final bool isDemoMode;
 
   SettingsState({
     required this.duressPhrase,
     required this.checkInFreqOffsetMins,
     required this.apiKey,
+    required this.isDemoMode,
   });
 
   SettingsState copyWith({
     String? duressPhrase,
     int? checkInFreqOffsetMins,
     String? apiKey,
+    bool? isDemoMode,
   }) {
     return SettingsState(
       duressPhrase: duressPhrase ?? this.duressPhrase,
       checkInFreqOffsetMins: checkInFreqOffsetMins ?? this.checkInFreqOffsetMins,
       apiKey: apiKey ?? this.apiKey,
+      isDemoMode: isDemoMode ?? this.isDemoMode,
     );
   }
 }
@@ -37,6 +41,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
           duressPhrase: _storage.getDuressPhrase(),
           checkInFreqOffsetMins: _storage.getCheckInFreqMinutes(),
           apiKey: _storage.getApiKey() ?? const String.fromEnvironment('GEMINI_API_KEY', defaultValue: ''),
+          isDemoMode: _storage.getDemoMode(),
         ));
 
   Future<void> updateDuressPhrase(String phrase) async {
@@ -52,6 +57,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> updateApiKey(String key) async {
     await _storage.saveApiKey(key);
     state = state.copyWith(apiKey: key);
+  }
+
+  Future<void> toggleDemoMode(bool enabled) async {
+    await _storage.saveDemoMode(enabled);
+    state = state.copyWith(isDemoMode: enabled);
   }
 }
 

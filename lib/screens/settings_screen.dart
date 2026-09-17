@@ -154,6 +154,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
 
+                const SizedBox(height: 20),
+
+                // 3. Judge / Demo Mode Toggle Section
+                Text(
+                  '3. JUDGE / DEMO EVALUATION MODE',
+                  style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0.8),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Enable compressed 15s check-in countdown timers, reveal duress phrases on Home, and display raw Gemini AI classification JSON payloads.',
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 10),
+
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: settings.isDemoMode ? AppColors.warningAmber : AppColors.border,
+                      width: settings.isDemoMode ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: SwitchListTile(
+                    value: settings.isDemoMode,
+                    activeThumbColor: AppColors.primary,
+                    activeTrackColor: AppColors.surfaceVariant,
+                    onChanged: (val) {
+                      ref.read(settingsProvider.notifier).toggleDemoMode(val);
+                    },
+                    title: Text(
+                      'DEMO MODE (HACKATHON EVALUATION)',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: settings.isDemoMode ? AppColors.warningAmber : AppColors.textPrimary,
+                      ),
+                    ),
+                    subtitle: Text(
+                      settings.isDemoMode
+                          ? 'ACTIVE: Timers compressed to 15s • Duress phrase visible • AI JSON internals panel enabled.'
+                          : 'INACTIVE: Normal real-world interval timing and standard production layout.',
+                      style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 24),
 
                 // Save Button (4px max rectangular navy button)

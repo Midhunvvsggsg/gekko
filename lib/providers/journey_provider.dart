@@ -12,6 +12,7 @@ import 'settings_provider.dart';
 class JourneyStateNotifier extends StateNotifier<Journey?> {
   final AIService _aiService;
   final String _duressPhrase;
+  final bool _isDemoMode;
 
   Timer? _countdownTimer;
   Timer? _locationTimer;
@@ -19,7 +20,7 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
   int _secondsToNextCheckIn = 0;
   int get secondsToNextCheckIn => _secondsToNextCheckIn;
 
-  JourneyStateNotifier(this._aiService, this._duressPhrase) : super(null);
+  JourneyStateNotifier(this._aiService, this._duressPhrase, this._isDemoMode) : super(null);
 
   /// Starts a new journey with the specified JourneyModeConfig
   Future<void> startJourney({
@@ -62,11 +63,12 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
 
   void _resetCheckInCountdown() {
     if (state == null) return;
-    // For demo purposes, shorten real minutes to demo seconds if needed,
-    // but keep realistic interval calculation:
-    // e.g. 8 mins default mode = 40 seconds demo cycle so judges see it trigger easily!
-    final modeMins = state!.mode.checkInInterval.inMinutes;
-    _secondsToNextCheckIn = (modeMins * 5).clamp(25, 120);
+    if (_isDemoMode) {
+      _secondsToNextCheckIn = 15;
+    } else {
+      final modeMins = state!.mode.checkInInterval.inMinutes;
+      _secondsToNextCheckIn = (modeMins * 60).clamp(15, 3600);
+    }
   }
 
   void _startTimers() {
@@ -219,10 +221,14 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
   }
 
   /// Complete Journey Safely
-  void completeJourney() {
+  Future<void> completeJourney() async {
     if (state == null) return;
     _stopTimers();
-    state = state!.copyWith(status: JourneyStatus.completed);
+    final arrivalSummary = await _aiService.generateArrivalSummary(state!);
+    state = state!.copyWith(
+      status: JourneyStatus.completed,
+      arrivalSummary: arrivalSummary,
+    );
   }
 
   /// Cancel & Reset
@@ -246,5 +252,6 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
 final journeyProvider = StateNotifierProvider<JourneyStateNotifier, Journey?>((ref) {
   final aiService = ref.watch(aiServiceProvider);
   final duressPhrase = ref.watch(settingsProvider.select((s) => s.duressPhrase));
-  return JourneyStateNotifier(aiService, duressPhrase);
+  final isDemoMode = ref.watch(settingsProvider.select((s) => s.isDemoMode));
+  return JourneyStateNotifier(aiService, duressPhrase, isDemoMode);
 });
