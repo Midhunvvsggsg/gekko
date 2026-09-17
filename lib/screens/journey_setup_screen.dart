@@ -24,6 +24,10 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   bool _isBriefingLoading = false;
   String? _riskBriefingText;
 
+  // Place Autocomplete State
+  List<LocationSearchResult> _searchResults = [];
+  bool _isSearchingLocation = false;
+
   final List<Map<String, dynamic>> _destinationPresets = [
     {'name': 'Union Square, SF', 'coords': LocationService.destinationSF1},
     {'name': 'Mission District, SF', 'coords': LocationService.destinationSF2},
@@ -61,6 +65,39 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
         });
       }
     }
+  }
+
+  void _onDestinationQueryChanged(String query) async {
+    _fetchRiskBriefing();
+
+    if (query.trim().length < 2) {
+      setState(() {
+        _searchResults = [];
+        _isSearchingLocation = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearchingLocation = true;
+    });
+
+    final results = await LocationService.searchPlaces(query);
+    if (mounted) {
+      setState(() {
+        _searchResults = results;
+        _isSearchingLocation = false;
+      });
+    }
+  }
+
+  void _onSelectSearchResult(LocationSearchResult result) {
+    setState(() {
+      _destinationController.text = result.description;
+      _selectedLatLng = result.latLng;
+      _searchResults = [];
+    });
+    _fetchRiskBriefing();
   }
 
   void _onStartJourney() {
@@ -155,7 +192,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
 
                 const SizedBox(height: 24),
 
-                // 2. Destination Input & Presets
+                // 2. Destination Input & Live Place Autocomplete
                 const Text(
                   '2. Destination & Duration',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
@@ -164,12 +201,75 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
 
                 TextField(
                   controller: _destinationController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Destination Name or Address',
-                    prefixIcon: Icon(Icons.place_outlined, color: AppColors.primary),
+                    prefixIcon: const Icon(Icons.place_outlined, color: AppColors.primary),
+                    suffixIcon: _isSearchingLocation
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                            ),
+                          )
+                        : (_destinationController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _destinationController.clear();
+                                  setState(() {
+                                    _searchResults = [];
+                                  });
+                                },
+                              )
+                            : null),
                   ),
-                  onChanged: (_) => _fetchRiskBriefing(),
+                  onChanged: _onDestinationQueryChanged,
                 ),
+
+                // Live Autocomplete Suggestions Overlay List
+                if (_searchResults.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.primary, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _searchResults.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
+                      itemBuilder: (context, index) {
+                        final result = _searchResults[index];
+                        return ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.location_on, color: AppColors.primary, size: 20),
+                          title: Text(
+                            result.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                          ),
+                          subtitle: Text(
+                            result.description,
+                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () => _onSelectSearchResult(result),
+                        );
+                      },
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 10),
 
@@ -187,6 +287,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                               setState(() {
                                 _destinationController.text = preset['name'];
                                 _selectedLatLng = preset['coords'];
+                                _searchResults = [];
                               });
                               _fetchRiskBriefing();
                             },
