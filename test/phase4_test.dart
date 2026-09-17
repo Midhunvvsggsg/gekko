@@ -2,8 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:gekko/services/speed_classifier_service.dart';
 import 'package:gekko/services/journey_sync_service.dart';
+import 'package:gekko/services/ai_service.dart';
 import 'package:gekko/models/journey.dart';
 import 'package:gekko/models/journey_mode_config.dart';
+import 'package:gekko/models/check_in.dart';
 
 void main() {
   group('Phase 4: SpeedClassifierService Tests', () {
@@ -64,6 +66,21 @@ void main() {
       expect(restored.destinationName, 'Central Station');
       expect(restored.modeLabel, mode.label);
       expect(restored.lastKnownLocation.latitude, 37.7749);
+    });
+  });
+
+  group('Phase 4: Safety Classification Tests', () {
+    test('Feeling uncomfortable someone behind me is classified as UNCERTAIN', () async {
+      final aiService = AIService();
+      final mode = JourneyModeConfig.defaultModes.first;
+
+      final res = await aiService.classifyCheckInResponse(
+        "Feeling a bit uncomfortable, someone behind me",
+        "everything is fine",
+        mode,
+      );
+
+      expect(res.status, CheckInStatus.uncertain);
     });
   });
 }

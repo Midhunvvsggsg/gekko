@@ -11,14 +11,21 @@ class AIService {
 
   bool get hasApiKey => apiKey != null && apiKey!.trim().isNotEmpty;
 
-  /// Generates a natural companion small-talk filler line or embedded check-in question.
-  Future<String> generateCompanionLine({required bool isCheckInQuestion}) async {
+  /// Generates a natural companion small-talk filler line or embedded check-in question using Gemini 2.0 Flash REST API.
+  Future<String> generateCompanionLine({
+    required bool isCheckInQuestion,
+    JourneyModeConfig? mode,
+    String? destinationName,
+  }) async {
+    final modeContext = mode != null ? ' during a ${mode.label} journey' : '';
+    final destContext = destinationName != null ? " heading towards $destinationName" : '';
+
     if (isCheckInQuestion) {
       if (!hasApiKey) return "Hey, just checking in — are you almost home and everything good?";
       try {
         final text = await _callGeminiText(
-          "You are acting as a reassuring phone contact ('Mom' or a friend). "
-          "Generate a casual, natural line asking if the speaker is getting home safely.",
+          "You are acting as a reassuring phone contact ('Mom' or a close friend) talking to someone$modeContext$destContext. "
+          "Generate a brief, warm, natural line asking if they are getting home safely. Max 1 short sentence.",
           "Generate companion check-in question.",
         );
         if (text != null && text.trim().isNotEmpty) return text.trim();
@@ -28,8 +35,8 @@ class AIService {
       if (!hasApiKey) return "So yeah, work was pretty busy today... how was your afternoon?";
       try {
         final text = await _callGeminiText(
-          "You are acting as a reassuring phone contact ('Mom' or a friend). "
-          "Generate a brief (1 short sentence) natural casual filler conversation line for a phone call.",
+          "You are acting as a reassuring phone contact ('Mom' or a close friend) on a phone call. "
+          "Generate a natural, casual filler conversation line (e.g. talking about dinner, weather, weekend plans). Max 1 short sentence.",
           "Generate casual call line.",
         );
         if (text != null && text.trim().isNotEmpty) return text.trim();
@@ -343,28 +350,40 @@ class AIService {
 
     if (lower.contains('help') ||
         lower.contains('follow') ||
+        lower.contains('following') ||
+        lower.contains('chasing') ||
         lower.contains('scared') ||
         lower.contains('danger') ||
         lower.contains('wrong route') ||
         lower.contains('stop car') ||
-        lower.contains('emergency')) {
+        lower.contains('emergency') ||
+        lower.contains('threat') ||
+        lower.contains('attack')) {
       status = CheckInStatus.concerning;
-      rationale = "Distress keywords or safety concerns detected in response.";
-    } else if (lower.contains('unsure') ||
+      rationale = "Distress keywords or explicit safety threats detected in response.";
+    } else if (lower.contains('uncomfortable') ||
+        lower.contains('behind') ||
+        lower.contains('nervous') ||
+        lower.contains('unsure') ||
         lower.contains('weird') ||
         lower.contains('delay') ||
         lower.contains('dark') ||
         lower.contains('uneasy') ||
-        lower.contains('suspicious')) {
+        lower.contains('suspicious') ||
+        lower.contains('sketchy') ||
+        lower.contains('creep') ||
+        lower.contains('scary') ||
+        lower.contains('watching') ||
+        lower.contains('stranger')) {
       status = CheckInStatus.uncertain;
-      rationale = "Potential discomfort or heightened caution indicated.";
+      rationale = "Potential discomfort, trailing entity, or heightened caution indicated.";
     }
 
     final raw = jsonEncode({
       "status": status.name,
       "rationale": rationale,
       "duressDetected": false,
-      "fallbackEngine": "Gekko Local Classifier"
+      "fallbackEngine": "Gekko Local Safety Engine"
     });
 
     return CheckInClassification(
@@ -394,5 +413,57 @@ class AIService {
         "• Mode (${mode.label}): ${mode.primaryRiskSignal} is actively monitored.\n"
         "• Vigilance: Keep mobile phone accessible, share live journey link, and avoid unlit paths.\n"
         "• Escalation: Emergency SOS triggers will immediately dispatch your location to emergency contacts.";
+  }
+
+  /// Returns mode-specific safety advice for UNCERTAIN situations.
+  static String getModeSafetyGuidance(JourneyModeConfig mode) {
+    switch (mode.id) {
+      case 'walking':
+        return "Head immediately towards the nearest open business, hotel lobby, or well-lit main street. Avoid unlit shortcuts and keep your phone in hand.";
+      case 'bus':
+        return "Move immediately to a seat closer to the bus driver. Stay seated in clear line of sight of other passengers.";
+      case 'taxi':
+        return "Verify driver name & license plate match your booking. Ask driver to stay on the GPS route and share your live tracking link.";
+      case 'train':
+        return "Move towards the conductor's car or a busier train carriage near the emergency intercom button.";
+      default:
+        return "Head towards a well-lit public area with people nearby. Keep your phone in hand and stay vigilant.";
+    }
+  }
+
+  /// Returns mode-specific local police precinct contact details.
+  static Map<String, String> getModePolicePrecinct(JourneyModeConfig mode) {
+    switch (mode.id) {
+      case 'walking':
+        return {
+          'name': 'SFPD Central Police Precinct',
+          'phone': '+1 415-553-0123',
+          'type': 'Local Police Precinct',
+        };
+      case 'bus':
+        return {
+          'name': 'Muni Transit Police Dispatch',
+          'phone': '+1 415-554-9800',
+          'type': 'Public Transit Police',
+        };
+      case 'taxi':
+        return {
+          'name': 'Traffic & Highway Patrol Dispatch',
+          'phone': '+1 415-553-0123',
+          'type': 'Rideshare & Traffic Division',
+        };
+      case 'train':
+        return {
+          'name': 'BART & Rail Transit Police',
+          'phone': '+1 510-464-7000',
+          'type': 'Metro Rail Transit Police',
+        };
+      default:
+        return {
+          'name': 'Emergency Dispatch Center',
+          'phone': '911',
+          'type': 'Emergency Services',
+        };
+    }
   }
 }

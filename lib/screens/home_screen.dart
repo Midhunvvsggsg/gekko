@@ -26,6 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final contacts = ref.watch(contactsProvider);
     final duressPhrase = ref.watch(settingsProvider.select((s) => s.duressPhrase));
     final isDemoMode = ref.watch(settingsProvider.select((s) => s.isDemoMode));
+    final isStealthFeatureEnabled = ref.watch(stealthProvider.select((s) => s.isStealthFeatureEnabled));
 
     final isDuressVisible = isDemoMode || _revealDuress;
     final displayDuressText = duressPhrase.isEmpty
@@ -236,10 +237,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         _buildQuickActionTile(
                           context,
-                          icon: Icons.calculate_outlined,
+                          icon: isStealthFeatureEnabled ? Icons.calculate_outlined : Icons.lock_outlined,
                           title: 'Stealth Disguise',
-                          subtitle: 'Stock calculator shell',
-                          onTap: () => ref.read(stealthProvider.notifier).enableStealth(),
+                          subtitle: isStealthFeatureEnabled ? 'Stock calculator shell' : 'Disabled in Settings',
+                          trailing: isStealthFeatureEnabled
+                              ? null
+                              : const Icon(Icons.lock, size: 14, color: AppColors.textSecondary),
+                          onTap: () {
+                            if (isStealthFeatureEnabled) {
+                              ref.read(stealthProvider.notifier).enableStealth();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Stealth Mode feature is disabled in Settings. Enable it in Settings to use.'),
+                                ),
+                              );
+                            }
+                          },
                         ),
                         _buildQuickActionTile(
                           context,

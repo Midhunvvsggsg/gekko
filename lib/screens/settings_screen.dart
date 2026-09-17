@@ -16,19 +16,26 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late TextEditingController _duressController;
   late TextEditingController _apiKeyController;
+  late TextEditingController _unlockCodeController;
+  late TextEditingController _panicCodeController;
 
   @override
   void initState() {
     super.initState();
     final settings = ref.read(settingsProvider);
+    final stealth = ref.read(stealthProvider);
     _duressController = TextEditingController(text: settings.duressPhrase);
     _apiKeyController = TextEditingController(text: settings.apiKey);
+    _unlockCodeController = TextEditingController(text: stealth.unlockCode);
+    _panicCodeController = TextEditingController(text: stealth.panicCode);
   }
 
   @override
   void dispose() {
     _duressController.dispose();
     _apiKeyController.dispose();
+    _unlockCodeController.dispose();
+    _panicCodeController.dispose();
     super.dispose();
   }
 
@@ -36,6 +43,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final notifier = ref.read(settingsProvider.notifier);
     notifier.updateDuressPhrase(_duressController.text.trim());
     notifier.updateApiKey(_apiKeyController.text.trim());
+
+    final stealthNotifier = ref.read(stealthProvider.notifier);
+    stealthNotifier.updateUnlockCode(_unlockCodeController.text.trim());
+    stealthNotifier.updatePanicCode(_panicCodeController.text.trim());
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Console settings saved.')),
@@ -45,7 +56,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final isStealth = ref.watch(stealthProvider.select((s) => s.isStealthModeActive));
+    final stealthState = ref.watch(stealthProvider);
+    final isStealthActive = stealthState.isStealthModeActive;
+    final isFeatureEnabled = stealthState.isStealthFeatureEnabled;
     final hasApiKey = settings.apiKey.trim().isNotEmpty;
 
     return Scaffold(
@@ -217,42 +230,107 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const SizedBox(height: 10),
 
+                // Master Feature Switch
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
-                      color: isStealth ? AppColors.primary : AppColors.border,
-                      width: isStealth ? 1.5 : 1.0,
+                      color: isFeatureEnabled ? AppColors.primary : AppColors.border,
+                      width: isFeatureEnabled ? 1.5 : 1.0,
                     ),
                   ),
                   child: SwitchListTile(
-                    value: isStealth,
+                    value: isFeatureEnabled,
                     activeThumbColor: AppColors.primary,
                     activeTrackColor: AppColors.surfaceVariant,
                     onChanged: (val) {
-                      ref.read(stealthProvider.notifier).setStealthMode(val);
+                      ref.read(stealthProvider.notifier).setFeatureEnabled(val);
                     },
                     title: Text(
-                      'ENABLE STEALTH MODE (CALCULATOR DISGUISE)',
+                      'ENABLE STEALTH DISGUISE FEATURE',
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: isStealth ? AppColors.primary : AppColors.textPrimary,
+                        color: isFeatureEnabled ? AppColors.primary : AppColors.textPrimary,
                       ),
                     ),
                     subtitle: Text(
-                      isStealth
-                          ? 'DISGUISED: App shell swapped to stock Calculator app.'
-                          : 'INACTIVE: Standard Gekko Dispatch Console UI.',
+                      isFeatureEnabled
+                          ? 'ENABLED: Stealth button on Home is active. Custom unlock and panic codes enabled.'
+                          : 'DISABLED (DEFAULT): Prevents accidental disguise activation. Home stealth tile is locked.',
                       style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.textSecondary),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 10),
+                if (isFeatureEnabled) ...[
+                  const SizedBox(height: 12),
+                  // Active Stealth Mode toggle (only accessible when feature is ON)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.border, width: 1.0),
+                    ),
+                    child: SwitchListTile(
+                      value: isStealthActive,
+                      activeThumbColor: AppColors.primary,
+                      onChanged: (val) {
+                        ref.read(stealthProvider.notifier).setStealthMode(val);
+                      },
+                      title: Text(
+                        'ENTER STEALTH CALCULATOR MODE NOW',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        isStealthActive ? 'DISGUISED IN CALCULATOR SHELL' : 'INACTIVE (STANDARD GEKKO CONSOLE)',
+                        style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ),
+                ],
 
-                // Secret Code Guide Reference Card (no borderRadius with left border accent)
+                const SizedBox(height: 14),
+
+                // Secret Code Configuration Inputs
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _unlockCodeController,
+                        keyboardType: TextInputType.number,
+                        style: GoogleFonts.ibmPlexMono(fontSize: 13, fontWeight: FontWeight.w700),
+                        decoration: const InputDecoration(
+                          labelText: 'Return Unlock Code',
+                          hintText: '1957',
+                          prefixIcon: Icon(Icons.key_outlined, color: AppColors.textPrimary, size: 18),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _panicCodeController,
+                        keyboardType: TextInputType.number,
+                        style: GoogleFonts.ibmPlexMono(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.sosRed),
+                        decoration: const InputDecoration(
+                          labelText: 'Silent Panic Code',
+                          hintText: '911',
+                          prefixIcon: Icon(Icons.warning_amber_outlined, color: AppColors.sosRed, size: 18),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Secret Code Guide Reference Card
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: const BoxDecoration(
@@ -278,7 +356,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             color: AppColors.primary,
                             child: Text(
-                              '${StealthCodes.unlockCode}=',
+                              '${stealthState.unlockCode}=',
                               style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
                             ),
                           ),
@@ -298,7 +376,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             color: AppColors.sosRed,
                             child: Text(
-                              '${StealthCodes.panicCode}=',
+                              '${stealthState.panicCode}=',
                               style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
                             ),
                           ),

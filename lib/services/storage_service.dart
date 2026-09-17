@@ -72,7 +72,9 @@ class StorageService {
 
   // --- Gemini API Key ---
   String? getApiKey() {
-    return prefs.getString(_keyApiKey);
+    final stored = prefs.getString(_keyApiKey);
+    if (stored != null && stored.trim().isNotEmpty) return stored.trim();
+    return null;
   }
 
   Future<void> saveApiKey(String key) async {
@@ -92,6 +94,9 @@ class StorageService {
 
   // --- Stealth Mode ---
   static const String _keyStealthMode = 'gekko_stealth_mode';
+  static const String _keyStealthFeatureEnabled = 'gekko_stealth_feature_enabled';
+  static const String _keyStealthUnlockCode = 'gekko_stealth_unlock_code';
+  static const String _keyStealthPanicCode = 'gekko_stealth_panic_code';
 
   bool getStealthMode() {
     return prefs.getBool(_keyStealthMode) ?? false;
@@ -99,5 +104,29 @@ class StorageService {
 
   Future<void> saveStealthMode(bool enabled) async {
     await prefs.setBool(_keyStealthMode, enabled);
+  }
+
+  bool getStealthFeatureEnabled() {
+    return prefs.getBool(_keyStealthFeatureEnabled) ?? false;
+  }
+
+  Future<void> saveStealthFeatureEnabled(bool enabled) async {
+    await prefs.setBool(_keyStealthFeatureEnabled, enabled);
+  }
+
+  String getStealthUnlockCode() {
+    return prefs.getString(_keyStealthUnlockCode) ?? '1957';
+  }
+
+  Future<void> saveStealthUnlockCode(String code) async {
+    await prefs.setString(_keyStealthUnlockCode, code.trim());
+  }
+
+  String getStealthPanicCode() {
+    return prefs.getString(_keyStealthPanicCode) ?? '911';
+  }
+
+  Future<void> saveStealthPanicCode(String code) async {
+    await prefs.setString(_keyStealthPanicCode, code.trim());
   }
 }

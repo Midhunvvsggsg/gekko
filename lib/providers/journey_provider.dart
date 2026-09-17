@@ -289,15 +289,30 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
     String userResponse, {
     bool isVoice = false,
   }) async {
-    if (state == null || state!.checkIns.isEmpty) {
+    if (state == null) {
       return const CheckInClassification(
         status: CheckInStatus.safe,
-        rationale: 'Journey in progress.',
+        rationale: 'No active journey.',
         duressDetected: false,
       );
     }
 
-    final currentCheckIn = state!.checkIns.last;
+    // Ensure there is a CheckIn record to attach this response to
+    CheckIn currentCheckIn;
+    List<CheckIn> existingCheckIns = List.from(state!.checkIns);
+
+    if (existingCheckIns.isEmpty || existingCheckIns.last.userResponse != null) {
+      final promptText = await _aiService.generateCheckInPrompt(state!.mode, state!);
+      currentCheckIn = CheckIn(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        timestamp: DateTime.now(),
+        promptText: promptText,
+      );
+      existingCheckIns.add(currentCheckIn);
+    } else {
+      currentCheckIn = existingCheckIns.last;
+    }
+
     final classification = await _aiService.classifyCheckInResponse(
       userResponse,
       _duressPhrase,
@@ -311,7 +326,7 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
     );
 
     final updatedCheckIns = [
-      ...state!.checkIns.sublist(0, state!.checkIns.length - 1),
+      ...existingCheckIns.sublist(0, existingCheckIns.length - 1),
       updatedCheckIn,
     ];
 

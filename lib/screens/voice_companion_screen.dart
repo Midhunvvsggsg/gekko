@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/tts_service.dart';
 import '../providers/ai_provider.dart';
 import '../providers/journey_provider.dart';
+import '../providers/settings_provider.dart';
 
 class VoiceCompanionScreen extends ConsumerStatefulWidget {
   const VoiceCompanionScreen({super.key});
@@ -16,6 +17,7 @@ class VoiceCompanionScreen extends ConsumerStatefulWidget {
 class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
   final TtsService _ttsService = TtsService();
   final TextEditingController _replyController = TextEditingController();
+  final TextEditingController _apiKeyDialogController = TextEditingController();
 
   Timer? _callTimer;
   Timer? _speechCycleTimer;
@@ -44,10 +46,8 @@ class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
   }
 
   void _startDialogueLoop() {
-    // Speak initial line
     _triggerNextDialogue(isCheckIn: false);
 
-    // Speak next line every 12 seconds
     _speechCycleTimer = Timer.periodic(const Duration(seconds: 12), (t) {
       if (mounted) {
         final isCheckIn = (t.tick % 2 == 0);
@@ -58,7 +58,13 @@ class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
 
   Future<void> _triggerNextDialogue({required bool isCheckIn}) async {
     final aiService = ref.read(aiServiceProvider);
-    final line = await aiService.generateCompanionLine(isCheckInQuestion: isCheckIn);
+    final activeJourney = ref.read(journeyProvider);
+
+    final line = await aiService.generateCompanionLine(
+      isCheckInQuestion: isCheckIn,
+      mode: activeJourney?.mode,
+      destinationName: activeJourney?.destinationName,
+    );
 
     if (mounted) {
       setState(() {
@@ -81,7 +87,6 @@ class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
       _isCheckInPending = false;
     });
 
-    // Pass response to journey check-in pipeline
     final notifier = ref.read(journeyProvider.notifier);
     final activeJourney = ref.read(journeyProvider);
 
@@ -89,7 +94,6 @@ class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
       await notifier.submitCheckInResponse(reply);
     }
 
-    // Acknowledge reply with TTS
     const ack = "Glad to hear that. Stay safe!";
     setState(() {
       _currentDialogue = ack;
@@ -97,6 +101,57 @@ class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
     if (!_isMuted) {
       await _ttsService.speak(ack);
     }
+  }
+
+  void _showApiKeyDialog() {
+    final currentKey = ref.read(settingsProvider).apiKey;
+    _apiKeyDialogController.text = currentKey;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        title: Text('Gemini API Key Configuration', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Paste your Gemini API key to enable live AI dialogue generation & duress analysis.',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _apiKeyDialogController,
+              obscureText: true,
+              style: GoogleFonts.ibmPlexMono(fontSize: 13),
+              decoration: const InputDecoration(
+                labelText: 'Gemini API Key',
+                hintText: 'AIzaSy...',
+                prefixIcon: Icon(Icons.vpn_key_outlined, size: 18),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newKey = _apiKeyDialogController.text.trim();
+              ref.read(settingsProvider.notifier).updateApiKey(newKey);
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Gemini API Key updated for Voice Companion.')),
+              );
+            },
+            child: const Text('Save Key'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _endCall() {
@@ -112,6 +167,7 @@ class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
     _callTimer?.cancel();
     _speechCycleTimer?.cancel();
     _replyController.dispose();
+    _apiKeyDialogController.dispose();
     super.dispose();
   }
 
@@ -124,20 +180,22 @@ class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
   @override
   Widget build(BuildContext context) {
     final activeJourney = ref.watch(journeyProvider);
+    final settings = ref.watch(settingsProvider);
     final modeLabel = activeJourney?.mode.label ?? 'WALK';
+    final hasApiKey = settings.apiKey.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0E1A2B), // Deep Gekko Navy background
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // 1. Header & Call Status
               Column(
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -155,18 +213,60 @@ class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 10),
+
+                  // Gemini Telemetry Status Badge
+                  GestureDetector(
+                    onTap: _showApiKeyDialog,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: hasApiKey
+                            ? const Color(0xFF1E6B4F).withValues(alpha: 0.2)
+                            : const Color(0xFF3B6E91).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: hasApiKey ? const Color(0xFF1E6B4F) : const Color(0xFF3B6E91),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.circle,
+                            size: 6,
+                            color: hasApiKey ? const Color(0xFF1E6B4F) : const Color(0xFF3B6E91),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            hasApiKey
+                                ? 'GEMINI 2.0 FLASH AI ENGINE: ACTIVE'
+                                : 'GEMINI AI: LOCAL FALLBACK (TAP TO PASTE KEY)',
+                            style: GoogleFonts.ibmPlexMono(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 16),
                   Container(
-                    width: 90,
-                    height: 90,
+                    width: 86,
+                    height: 86,
                     decoration: BoxDecoration(
                       color: const Color(0xFF14304D),
                       shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFF3B6E91), width: 2.0),
                     ),
-                    child: const Icon(Icons.record_voice_over_outlined, color: Colors.white, size: 44),
+                    child: const Icon(Icons.record_voice_over_outlined, color: Colors.white, size: 42),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Text(
                     'Mom (AI Voice Companion)',
                     style: GoogleFonts.spaceGrotesk(
@@ -296,12 +396,12 @@ class _VoiceCompanionScreenState extends ConsumerState<VoiceCompanionScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // End Call Button
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
+                    height: 50,
                     child: ElevatedButton.icon(
                       onPressed: _endCall,
                       icon: const Icon(Icons.call_end, color: Colors.white),

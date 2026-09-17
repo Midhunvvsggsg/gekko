@@ -87,19 +87,22 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
   void _onEqualsPressed() {
     // 1. Check Secret Codes in typed digits sequence
     final digitsOnly = _typedSequence.replaceAll(RegExp(r'[^0-9]'), '');
+    final stealthState = ref.read(stealthProvider);
+    final unlockCode = stealthState.unlockCode;
+    final panicCode = stealthState.panicCode;
 
-    if (digitsOnly.endsWith(StealthCodes.unlockCode)) {
+    if (unlockCode.isNotEmpty && digitsOnly.endsWith(unlockCode)) {
       // Return to real Gekko app UI
       _typedSequence = '';
       ref.read(stealthProvider.notifier).disableStealth();
       return;
     }
 
-    if (digitsOnly.endsWith(StealthCodes.panicCode)) {
+    if (panicCode.isNotEmpty && digitsOnly.endsWith(panicCode)) {
       // Silent Emergency Panic Trigger (No visual UI change!)
       _typedSequence = '';
       ref.read(journeyProvider.notifier).triggerSOS(
-            triggerSource: 'Silent Disguise Panic Code (911)',
+            triggerSource: 'Silent Disguise Panic Code ($panicCode)',
           );
       // Fall through to compute math or keep display without alerting user
     }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../models/check_in.dart';
 import '../providers/journey_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/ai_service.dart';
 import '../services/speech_service.dart';
 
 class CheckInModal extends ConsumerStatefulWidget {
@@ -82,12 +84,27 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
         _isSubmitting = false;
       });
 
-      // Auto dismiss modal or transition to escalation if CONCERNING / DURESS
-      await Future.delayed(const Duration(milliseconds: 1500));
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
+      // ONLY auto-dismiss if result is SAFE and no duress detected
+      if (result.status == CheckInStatus.safe && !result.duressDetected) {
+        await Future.delayed(const Duration(milliseconds: 1500));
+        if (mounted && Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
       }
+      // If UNCERTAIN or CONCERNING, keep modal OPEN to show police contacts & help buttons!
     }
+  }
+
+  void _triggerEmergencyHelp(BuildContext context) {
+    Navigator.pop(context);
+    ref.read(journeyProvider.notifier).triggerSOS(
+          triggerSource: 'Help Needed Triggered from Check-In Verification',
+        );
+    context.go('/sos');
+  }
+
+  void _confirmSafeStatus(BuildContext context) {
+    Navigator.pop(context);
   }
 
   @override
@@ -99,16 +116,20 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
         ? journey!.checkIns.last.promptText
         : "Gekko Safety Instrumentation: Confirm your current status.";
 
+    final mode = journey?.mode;
+    final policeInfo = mode != null ? AIService.getModePolicePrecinct(mode) : null;
+    final safetyGuidance = mode != null ? AIService.getModeSafetyGuidance(mode) : null;
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 650),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(4)), // Rectangular 4px max
+          borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
           border: Border(
             top: BorderSide(color: AppColors.primary, width: 3.0),
             left: BorderSide(color: AppColors.border, width: 1.0),
@@ -173,7 +194,7 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
                   constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary, // #14304D Deep Navy
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Column(
@@ -245,8 +266,11 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         side: const BorderSide(color: AppColors.warningAmber, width: 1.0),
                       ),
-                      onPressed: () => _responseController.text = 'Feeling a bit uncomfortable, someone behind me',
-                      child: Text('Feeling uncomfortable ⚠️', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.warningAmber)),
+                      onPressed: () {
+                        _responseController.text = 'Feeling a bit uncomfortable, someone behind me';
+                        _submitResponse();
+                      },
+                      child: Text('Feeling uncomfortable ⚠️', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.warningAmber, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
@@ -308,10 +332,140 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
                 ),
               ],
 
-              // Classification Result Card (Left Accent Stripe rectangular tag)
+              // Classification Result & High-Alert Guidance Panel
               if (_classificationResult != null) ...[
                 const SizedBox(height: 16),
                 _buildClassificationCard(_classificationResult!),
+
+                // If UNCERTAIN or CONCERNING: Show Mode Safety Advice + Police Contacts + Help Needed Buttons
+                if (_classificationResult!.status == CheckInStatus.uncertain ||
+                    _classificationResult!.status == CheckInStatus.concerning) ...[
+                  const SizedBox(height: 12),
+
+                  // Mode-Specific Safety Advice Box
+                  if (safetyGuidance != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(
+                        color: AppColors.warningBg,
+                        border: Border(
+                          left: BorderSide(color: AppColors.warningAmber, width: 4.0),
+                          top: BorderSide(color: AppColors.warningBorder, width: 1.0),
+                          right: BorderSide(color: AppColors.warningBorder, width: 1.0),
+                          bottom: BorderSide(color: AppColors.warningBorder, width: 1.0),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.privacy_tip_outlined, color: AppColors.warningAmber, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${mode?.label.toUpperCase()} PROFILE SAFETY ADVICE',
+                                style: GoogleFonts.spaceGrotesk(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.warningAmber),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            safetyGuidance,
+                            style: GoogleFonts.ibmPlexSans(fontSize: 12, color: AppColors.textPrimary, height: 1.4),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 10),
+
+                  // Nearby Police Precinct Contact Box
+                  if (policeInfo != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppColors.border, width: 1.0),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppColors.border, width: 1.0),
+                            ),
+                            child: const Icon(Icons.local_police_outlined, color: AppColors.primary, size: 22),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  policeInfo['type']!.toUpperCase(),
+                                  style: GoogleFonts.ibmPlexMono(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                                ),
+                                Text(
+                                  policeInfo['name']!,
+                                  style: GoogleFonts.spaceGrotesk(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                                ),
+                                Text(
+                                  policeInfo['phone']!,
+                                  style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
+                            icon: const Icon(Icons.phone, size: 14, color: AppColors.primary),
+                            label: const Text('Call Station'),
+                            onPressed: () {},
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 14),
+
+                  // Immediate Resolution & HELP NEEDED Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: const BorderSide(color: AppColors.safeGreen, width: 1.5),
+                          ),
+                          onPressed: () => _confirmSafeStatus(context),
+                          child: Text(
+                            'I Am Okay Now',
+                            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.safeGreen),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            backgroundColor: AppColors.sosRed,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          ),
+                          onPressed: () => _triggerEmergencyHelp(context),
+                          icon: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+                          label: Text(
+                            'HELP NEEDED (SOS)',
+                            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
                 // Collapsible AI Internals Panel (Judge / Demo Mode)
                 if (isDemoMode && _classificationResult!.rawJson != null) ...[
@@ -349,7 +503,7 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.textPrimary, // #0E1A2B Dark Charcoal
+                        color: AppColors.textPrimary,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: SelectableText(
@@ -371,7 +525,6 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
     Color borderAccent;
     String title;
 
-    // RULE: Silent duress displays SAFE tag on screen to avoid visual alert difference
     if (classification.duressDetected) {
       borderAccent = AppColors.safeGreen;
       title = 'SAFE';
