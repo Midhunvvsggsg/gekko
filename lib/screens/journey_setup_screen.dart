@@ -20,6 +20,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   JourneyModeConfig _selectedMode = JourneyModeConfig.defaultModes[0]; // Walking
   final TextEditingController _destinationController =
       TextEditingController(text: 'Market St & 4th St, San Francisco, CA');
+  late TextEditingController _durationController;
   LatLng _selectedLatLng = LocationService.destinationSF1;
   int _expectedDurationMinutes = 20;
 
@@ -39,7 +40,15 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   @override
   void initState() {
     super.initState();
+    _durationController = TextEditingController(text: _expectedDurationMinutes.toString());
     _fetchRiskBriefing();
+  }
+
+  @override
+  void dispose() {
+    _destinationController.dispose();
+    _durationController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchRiskBriefing() async {
@@ -314,33 +323,64 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
 
                 const SizedBox(height: 14),
 
-                // Expected Duration Chips
-                Row(
+                // Expected Duration Chips & Custom Input Field
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('EXPECTED TIME: ', style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                    const SizedBox(width: 8),
-                    Wrap(
-                      spacing: 6,
-                      children: [15, 20, 30, 45, 60].map((mins) {
-                        final isSelected = _expectedDurationMinutes == mins;
-                        return ChoiceChip(
-                          label: Text('${mins}M'),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(() {
-                                _expectedDurationMinutes = mins;
-                              });
-                            }
-                          },
-                          selectedColor: AppColors.primary,
-                          labelStyle: GoogleFonts.ibmPlexMono(
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
+                    Text('EXPECTED DURATION: ', style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [15, 20, 30, 45, 60].map((mins) {
+                              final isSelected = _expectedDurationMinutes == mins;
+                              return ChoiceChip(
+                                label: Text('${mins}M'),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setState(() {
+                                      _expectedDurationMinutes = mins;
+                                      _durationController.text = mins.toString();
+                                    });
+                                  }
+                                },
+                                selectedColor: AppColors.primary,
+                                labelStyle: GoogleFonts.ibmPlexMono(
+                                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              );
+                            }).toList(),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          width: 110,
+                          child: TextField(
+                            controller: _durationController,
+                            keyboardType: TextInputType.number,
+                            style: GoogleFonts.ibmPlexMono(fontSize: 13, fontWeight: FontWeight.w700),
+                            decoration: const InputDecoration(
+                              labelText: 'Custom',
+                              suffixText: 'mins',
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            ),
+                            onChanged: (val) {
+                              final parsed = int.tryParse(val.trim());
+                              if (parsed != null && parsed > 0) {
+                                setState(() {
+                                  _expectedDurationMinutes = parsed;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
