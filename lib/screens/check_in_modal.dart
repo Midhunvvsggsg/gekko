@@ -247,6 +247,11 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
               // Input Field & Action Buttons (Hidden after submission)
               if (_submittedUserResponse == null) ...[
                 // Preset Response Chips
+                Text(
+                  'SELECT QUICK RESPONSE PRESET:',
+                  style: GoogleFonts.ibmPlexMono(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
@@ -275,6 +280,17 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        side: const BorderSide(color: AppColors.warningAmber, width: 1.0),
+                      ),
+                      onPressed: () {
+                        _responseController.text = 'Unlit dark area, feeling uneasy';
+                        _submitResponse();
+                      },
+                      child: Text('Dark / Unlit area ⚠️', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.warningAmber, fontWeight: FontWeight.w700)),
+                    ),
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         backgroundColor: AppColors.sosRedBg,
                         side: const BorderSide(color: AppColors.sosRed, width: 1.0),
                       ),
@@ -295,6 +311,18 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
                         _submitResponse();
                       },
                       child: Text('Someone following me 🚨', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.sosRed, fontWeight: FontWeight.w700)),
+                    ),
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        backgroundColor: AppColors.sosRedBg,
+                        side: const BorderSide(color: AppColors.sosRed, width: 1.0),
+                      ),
+                      onPressed: () {
+                        _responseController.text = 'Immediate danger! Need urgent assistance!';
+                        _submitResponse();
+                      },
+                      child: Text('Immediate Danger! 🚨', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.sosRed, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
