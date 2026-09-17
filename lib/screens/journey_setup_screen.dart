@@ -10,6 +10,7 @@ import '../services/location_service.dart';
 import '../providers/journey_provider.dart';
 import '../providers/ai_provider.dart';
 import '../utils/time_utils.dart';
+import '../widgets/sun_moon_toggle.dart';
 
 class JourneySetupScreen extends ConsumerStatefulWidget {
   const JourneySetupScreen({super.key});
@@ -211,6 +212,12 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: SunMoonToggle(),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

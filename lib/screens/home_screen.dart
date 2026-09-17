@@ -9,6 +9,7 @@ import '../providers/journey_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/stealth_provider.dart';
+import '../widgets/sun_moon_toggle.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -73,6 +74,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         actions: [
+          const SunMoonToggle(),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: AppColors.textPrimary, size: 20),
             tooltip: 'Settings',

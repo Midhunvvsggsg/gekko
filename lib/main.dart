@@ -5,6 +5,7 @@ import 'theme/app_theme.dart';
 import 'services/storage_service.dart';
 import 'providers/settings_provider.dart';
 import 'providers/stealth_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/journey_setup_screen.dart';
 import 'screens/active_journey_screen.dart';
@@ -87,11 +88,14 @@ class GekkoApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isStealth = ref.watch(stealthProvider.select((s) => s.isStealthModeActive));
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'Gekko — Personal Safety Companion',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       routerConfig: _router,
       builder: (context, child) {
         if (isStealth) {

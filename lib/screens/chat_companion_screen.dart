@@ -10,6 +10,7 @@ import '../providers/chat_companion_provider.dart';
 import '../providers/journey_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/ai_service.dart';
+import '../widgets/sun_moon_toggle.dart';
 
 class ChatCompanionScreen extends ConsumerStatefulWidget {
   const ChatCompanionScreen({super.key});
@@ -81,6 +82,8 @@ class _ChatCompanionScreenState extends ConsumerState<ChatCompanionScreen> {
           onPressed: () => context.pop(),
         ),
         actions: [
+          const SunMoonToggle(),
+          const SizedBox(width: 8),
           Container(
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
