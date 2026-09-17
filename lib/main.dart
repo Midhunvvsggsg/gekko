@@ -16,6 +16,7 @@ import 'screens/settings_screen.dart';
 import 'screens/calculator_screen.dart';
 import 'screens/track_journey_screen.dart';
 import 'screens/voice_companion_screen.dart';
+import 'screens/chat_companion_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -77,6 +78,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/voice-companion',
       builder: (context, state) => const VoiceCompanionScreen(),
+    ),
+    GoRoute(
+      path: '/chat-companion',
+      builder: (context, state) => const ChatCompanionScreen(),
     ),
   ],
 );

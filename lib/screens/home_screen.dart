@@ -257,10 +257,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         _buildQuickActionTile(
                           context,
-                          icon: Icons.record_voice_over_outlined,
-                          title: 'Voice Companion',
-                          subtitle: 'Proactive deterrent call',
-                          onTap: () => context.push('/voice-companion'),
+                          icon: Icons.chat_bubble_outline,
+                          title: 'AI Chat Companion',
+                          subtitle: 'Proactive trip safety chat',
+                          onTap: () => context.push('/chat-companion'),
                         ),
                       ],
                     );

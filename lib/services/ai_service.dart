@@ -4,6 +4,21 @@ import '../models/journey_mode_config.dart';
 import '../models/journey.dart';
 import '../models/check_in.dart';
 
+class ChatCompanionResponse {
+  final String reply;
+  final CheckInStatus safetyStatus;
+  final String rationale;
+  final String? rawJson;
+
+  const ChatCompanionResponse({
+    required this.reply,
+    required this.safetyStatus,
+    required this.rationale,
+    this.rawJson,
+  });
+}
+
+
 class AIService {
   final String? apiKey;
 
@@ -176,6 +191,139 @@ class AIService {
 
     // 3. Smart Local Fallback Classifier
     return _fallbackClassify(userResponse, mode);
+  }
+
+  /// Generates a conversational AI companion chat response and classifies safety in real-time.
+  Future<ChatCompanionResponse> sendChatCompanionMessage({
+    required String userMessage,
+    required List<Map<String, String>> history,
+    JourneyModeConfig? mode,
+    String? destinationName,
+  }) async {
+    final modeStr = mode?.label ?? 'Walking';
+    final destStr = destinationName ?? 'destination';
+
+    // 1. Check Gemini API if Key available
+    if (hasApiKey) {
+      try {
+        final systemInstruction =
+            "You are Gekko, an intelligent, protective, and empathetic personal AI safety companion accompanying the user during a $modeStr journey to '$destStr'. "
+            "Your job is to talk with the user, answer questions, provide route and local safety advice, keep them calm and company, and continuously monitor for safety threats. "
+            "Return ONLY a valid JSON object matching this schema EXACTLY, with no markdown code blocks:\n"
+            "{\n"
+            '  "reply": "Conversational, helpful, warm response to user (1-2 sentences max)",\n'
+            '  "safetyStatus": "safe" | "uncertain" | "concerning",\n'
+            '  "rationale": "Brief rationale for safety status classification"\n'
+            "}\n"
+            "Safety Classification Rules:\n"
+            "- 'safe': General conversation, asking directions, normal progress.\n"
+            "- 'uncertain': User expresses nervousness, uncomfortable feeling, unlit path, uneasy stranger, or trailing person.\n"
+            "- 'concerning': Explicit help request, aggressive threat, panic, assault, or urgent danger.";
+
+        final contents = history.map((msg) {
+          return {
+            "role": msg['sender'] == 'user' ? 'user' : 'model',
+            "parts": [
+              {"text": msg['text']}
+            ]
+          };
+        }).toList();
+
+        contents.add({
+          "role": "user",
+          "parts": [
+            {"text": userMessage}
+          ]
+        });
+
+        final body = {
+          "contents": contents,
+          "systemInstruction": {
+            "parts": [
+              {"text": systemInstruction}
+            ]
+          },
+          "generationConfig": {
+            "responseMimeType": "application/json",
+            "temperature": 0.4
+          }
+        };
+
+        final url = Uri.parse(
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey!.trim()}",
+        );
+
+        final res = await http.post(
+          url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode(body),
+        ).timeout(const Duration(seconds: 8));
+
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body);
+          final text = data['candidates']?[0]?['content']?['parts']?[0]?['text'];
+          if (text != null) {
+            final cleanJsonStr = _sanitizeJsonText(text);
+            final jsonMap = jsonDecode(cleanJsonStr);
+            final reply = jsonMap['reply']?.toString() ?? 'I am right here with you. Stay safe!';
+            final statusStr = jsonMap['safetyStatus']?.toString() ?? 'safe';
+            final rationale = jsonMap['rationale']?.toString() ?? 'Normal chat interaction.';
+
+            CheckInStatus status = CheckInStatus.safe;
+            if (statusStr == 'concerning') {
+              status = CheckInStatus.concerning;
+            } else if (statusStr == 'uncertain') {
+              status = CheckInStatus.uncertain;
+            }
+
+            return ChatCompanionResponse(
+              reply: reply,
+              safetyStatus: status,
+              rationale: rationale,
+              rawJson: cleanJsonStr,
+            );
+          }
+        }
+      } catch (_) {
+        // Fallback on API timeout/error
+      }
+    }
+
+    // 2. Local Fallback Chat Engine
+    return _fallbackChatResponse(userMessage, modeStr, destStr);
+  }
+
+  ChatCompanionResponse _fallbackChatResponse(String input, String modeStr, String destStr) {
+    final lower = input.toLowerCase();
+    CheckInStatus status = CheckInStatus.safe;
+    String rationale = "Normal conversation interaction.";
+    String reply = "I'm right here with you on your $modeStr journey to $destStr. Stay alert and keep moving towards well-lit areas!";
+
+    if (lower.contains('help') || lower.contains('danger') || lower.contains('attack') || lower.contains('emergency') || lower.contains('follow')) {
+      status = CheckInStatus.concerning;
+      rationale = "High safety threat or panic keyword detected.";
+      reply = "🚨 Safety Alert: I'm flagging this immediately. Head towards a crowded place or tap the Emergency SOS button below to alert your contacts!";
+    } else if (lower.contains('behind') || lower.contains('uncomfortable') || lower.contains('scared') || lower.contains('nervous') || lower.contains('dark')) {
+      status = CheckInStatus.uncertain;
+      rationale = "Discomfort or uneasy environment indicated.";
+      reply = "I hear you. Turn onto a well-lit street, keep your phone ready, and stay in public view. Would you like to call local police contacts?";
+    } else if (lower.contains('far') || lower.contains('long') || lower.contains('eta')) {
+      reply = "You're making steady progress towards $destStr. Keep up your pace and let me know if anything changes around you!";
+    }
+
+    final raw = jsonEncode({
+      "reply": reply,
+      "safetyStatus": status.name,
+      "rationale": rationale,
+      "fallbackEngine": "Gekko Local Chat Safety Engine"
+    });
+
+    return ChatCompanionResponse(
+      reply: reply,
+      safetyStatus: status,
+      rationale: rationale,
+      rawJson: raw,
+    );
   }
 
   /// Generates AI summary upon safe arrival at destination.
