@@ -14,12 +14,57 @@ class LocationSearchResult {
   });
 }
 
+class CurrentLocationResult {
+  final LatLng position;
+  final String locationName;
+  final bool isLiveGps;
+
+  CurrentLocationResult({
+    required this.position,
+    required this.locationName,
+    required this.isLiveGps,
+  });
+}
+
 class LocationService {
   // Demo coordinates centered around San Francisco
   static const LatLng defaultStart = LatLng(37.7749, -122.4194);
   static const LatLng destinationSF1 = LatLng(37.7833, -122.4167); // Union Square area
   static const LatLng destinationSF2 = LatLng(37.7600, -122.4100); // Mission District
   static const LatLng destinationSF3 = LatLng(37.7890, -122.4014); // Embarcadero
+
+  /// Attempts to fetch live device position, falling back gracefully to default SF location if unavailable
+  static Future<CurrentLocationResult> getCurrentDeviceLocation() async {
+    try {
+      final res = await http
+          .get(Uri.parse('https://ipapi.co/json/'))
+          .timeout(const Duration(seconds: 2));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['latitude'] != null && data['longitude'] != null) {
+          final lat = (data['latitude'] as num).toDouble();
+          final lng = (data['longitude'] as num).toDouble();
+          final city = data['city']?.toString() ?? 'Local Area';
+          final region = data['region_code']?.toString() ?? data['country_code']?.toString() ?? '';
+          final label = region.isNotEmpty ? '$city, $region' : city;
+
+          return CurrentLocationResult(
+            position: LatLng(lat, lng),
+            locationName: 'Live Device GPS ($label • ${lat.toStringAsFixed(3)}, ${lng.toStringAsFixed(3)})',
+            isLiveGps: true,
+          );
+        }
+      }
+    } catch (_) {
+      // Fallback gracefully on timeout / network / CORS restriction
+    }
+
+    return CurrentLocationResult(
+      position: defaultStart,
+      locationName: 'Default Console (Union Square, SF • 37.775, -122.419)',
+      isLiveGps: false,
+    );
+  }
 
   /// Comprehensive real-time & fallback place autocomplete search engine
   static Future<List<LocationSearchResult>> searchPlaces(String query) async {

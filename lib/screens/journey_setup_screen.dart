@@ -30,6 +30,9 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   List<LocationSearchResult> _searchResults = [];
   bool _isSearchingLocation = false;
 
+  CurrentLocationResult? _currentStartLocation;
+  bool _isDetectingStartLocation = true;
+
   final List<Map<String, dynamic>> _destinationPresets = [
     {'name': 'Union Square, SF', 'coords': LocationService.destinationSF1},
     {'name': 'Mission District, SF', 'coords': LocationService.destinationSF2},
@@ -41,6 +44,20 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
     super.initState();
     _durationController = TextEditingController(text: _expectedDurationMinutes.toString());
     _fetchRiskBriefing();
+    _detectStartLocation();
+  }
+
+  Future<void> _detectStartLocation() async {
+    setState(() {
+      _isDetectingStartLocation = true;
+    });
+    final result = await LocationService.getCurrentDeviceLocation();
+    if (mounted) {
+      setState(() {
+        _currentStartLocation = result;
+        _isDetectingStartLocation = false;
+      });
+    }
   }
 
   @override
@@ -115,11 +132,14 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
         ? 'Union Square, San Francisco'
         : _destinationController.text.trim();
 
+    final startLatLng = _currentStartLocation?.position ?? LocationService.defaultStart;
+
     ref.read(journeyProvider.notifier).startJourney(
           mode: _selectedMode,
           destinationName: destName,
           destinationLatLng: _selectedLatLng,
           expectedDuration: Duration(minutes: _expectedDurationMinutes),
+          startLatLng: startLatLng,
         );
     context.go('/active');
   }
@@ -206,6 +226,11 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                     },
                   ),
                 ),
+
+                const SizedBox(height: 16),
+
+                // Live Device GPS Starting Origin Card
+                _buildStartingLocationCard(),
 
                 const SizedBox(height: 20),
 
@@ -516,6 +541,93 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStartingLocationCard() {
+    final isLive = _currentStartLocation?.isLiveGps == true;
+    final statusColor = _isDetectingStartLocation
+        ? AppColors.textSecondary
+        : (isLive ? AppColors.safeGreen : AppColors.primary);
+    final statusText = _isDetectingStartLocation
+        ? 'DETECTING GPS LOCATION...'
+        : (isLive ? 'LIVE DEVICE GPS ACTIVE' : 'DEFAULT CONSOLE FALLBACK');
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(4),
+        border: Border(
+          left: BorderSide(color: statusColor, width: 4.0),
+          top: const BorderSide(color: AppColors.border, width: 1.0),
+          right: const BorderSide(color: AppColors.border, width: 1.0),
+          bottom: const BorderSide(color: AppColors.border, width: 1.0),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _isDetectingStartLocation
+                ? Icons.my_location
+                : (isLive ? Icons.gps_fixed : Icons.location_off_outlined),
+            color: statusColor,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'STARTING LOCATION (ORIGIN)',
+                      style: GoogleFonts.ibmPlexMono(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceVariant,
+                        borderRadius: BorderRadius.circular(2),
+                        border: Border.all(color: statusColor, width: 1.0),
+                      ),
+                      child: Text(
+                        statusText,
+                        style: GoogleFonts.ibmPlexMono(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _currentStartLocation?.locationName ?? 'Detecting starting location...',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh_outlined, size: 16, color: AppColors.textSecondary),
+            tooltip: 'Re-detect Device Location',
+            onPressed: _detectStartLocation,
+          ),
+        ],
+      ),
     );
   }
 }
