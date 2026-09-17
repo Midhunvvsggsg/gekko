@@ -14,6 +14,8 @@ import 'screens/contacts_screen.dart';
 import 'screens/fake_call_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/calculator_screen.dart';
+import 'screens/track_journey_screen.dart';
+import 'screens/voice_companion_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +67,16 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/track/:journeyId',
+      builder: (context, state) => TrackJourneyScreen(
+        journeyId: state.pathParameters['journeyId'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '/voice-companion',
+      builder: (context, state) => const VoiceCompanionScreen(),
     ),
   ],
 );

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../models/journey.dart';
+import '../models/journey_mode_config.dart';
 import '../providers/journey_provider.dart';
+import '../providers/settings_provider.dart';
 import 'check_in_modal.dart';
 
 class ActiveJourneyScreen extends ConsumerStatefulWidget {
@@ -19,10 +22,53 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
   final MapController _mapController = MapController();
   bool _modalShown = false;
 
+  void _shareJourneyLink(BuildContext context, Journey journey) {
+    final trackUrl = Uri.base.origin.contains('http')
+        ? '${Uri.base.origin}/#/track/${journey.id}'
+        : 'http://localhost:8080/#/track/${journey.id}';
+
+    Clipboard.setData(ClipboardData(text: trackUrl));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Public Journey Tracking Link copied: $trackUrl'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showModeOverrideDialog(BuildContext context, JourneyStateNotifier notifier) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => SimpleDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        title: Text('Select Monitoring Profile Override', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        children: JourneyModeConfig.defaultModes.map((mode) {
+          return SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              notifier.overrideMode(mode);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Icon(mode.icon, color: AppColors.textPrimary, size: 20),
+                  const SizedBox(width: 10),
+                  Text(mode.label, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600, fontSize: 14)),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final journey = ref.watch(journeyProvider);
     final journeyNotifier = ref.read(journeyProvider.notifier);
+    final isDemoMode = ref.watch(settingsProvider.select((s) => s.isDemoMode));
 
     // Redirect or trigger popups based on journey status
     if (journey == null) {
@@ -61,11 +107,16 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
             const SizedBox(width: 8),
             Text(
               '${journey.mode.label.toUpperCase()} DISPATCH INSTRUMENTATION',
-              style: GoogleFonts.spaceGrotesk(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+              style: GoogleFonts.spaceGrotesk(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.5),
             ),
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: AppColors.textPrimary),
+            tooltip: 'Share Journey Tracking Link',
+            onPressed: () => _shareJourneyLink(context, journey),
+          ),
           IconButton(
             icon: const Icon(Icons.close, color: AppColors.textPrimary),
             tooltip: 'Cancel Journey',
@@ -103,7 +154,7 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
               // Markers layer (User location & Destination)
               MarkerLayer(
                 markers: [
-                  // User Current Position Marker (Square 4px container, plain line icon)
+                  // User Current Position Marker
                   Marker(
                     point: journey.currentPosition,
                     width: 44,
@@ -141,7 +192,7 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
             ],
           ),
 
-          // 2. Top Journey Info Bar Overlay (Flat, 4px max radius, 1px solid border)
+          // 2. Top Journey Info Bar Overlay
           Positioned(
             top: 14,
             left: 14,
@@ -149,63 +200,107 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 600),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.border, width: 1.0),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'TARGET DESTINATION',
-                              style: GoogleFonts.ibmPlexMono(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
-                            ),
-                            Text(
-                              journey.destinationName,
-                              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppColors.border, width: 1.0),
                       ),
-                      const SizedBox(width: 12),
-                      // Monospace Countdown Instrument Badge
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'TARGET DESTINATION',
+                                  style: GoogleFonts.ibmPlexMono(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                                ),
+                                Text(
+                                  journey.destinationName,
+                                  style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Monospace Countdown Instrument Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: journey.isDeviated ? AppColors.sosRedBg : AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: journey.isDeviated ? AppColors.sosRedBorder : AppColors.border,
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  'NEXT CHECK-IN',
+                                  style: GoogleFonts.ibmPlexMono(fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                                ),
+                                Text(
+                                  '$minsStr:$secsStr',
+                                  style: GoogleFonts.ibmPlexMono(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: journey.isDeviated ? AppColors.sosRed : AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Non-blocking Auto Mode-Switch Banner
+                    if (journey.autoSwitchedNotice != null) ...[
+                      const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: journey.isDeviated ? AppColors.sosRedBg : AppColors.surfaceVariant,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: journey.isDeviated ? AppColors.sosRedBorder : AppColors.border,
-                            width: 1.0,
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          border: Border(
+                            left: BorderSide(color: AppColors.primary, width: 4.0),
+                            top: BorderSide(color: AppColors.border, width: 1.0),
+                            right: BorderSide(color: AppColors.border, width: 1.0),
+                            bottom: BorderSide(color: AppColors.border, width: 1.0),
                           ),
                         ),
-                        child: Column(
+                        child: Row(
                           children: [
-                            Text(
-                              'NEXT CHECK-IN',
-                              style: GoogleFonts.ibmPlexMono(fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
-                            ),
-                            Text(
-                              '$minsStr:$secsStr',
-                              style: GoogleFonts.ibmPlexMono(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: journey.isDeviated ? AppColors.sosRed : AppColors.primary,
+                            const Icon(Icons.directions_bus_outlined, color: AppColors.primary, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                journey.autoSwitchedNotice!,
+                                style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                               ),
+                            ),
+                            TextButton(
+                              onPressed: () => _showModeOverrideDialog(context, journeyNotifier),
+                              child: Text(
+                                'Change',
+                                style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentSecondary),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
+                              onPressed: () => journeyNotifier.dismissAutoSwitchNotice(),
                             ),
                           ],
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -214,7 +309,7 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
           // 3. Off-route Alert Banner if deviated
           if (journey.isDeviated)
             Positioned(
-              top: 76,
+              top: journey.autoSwitchedNotice != null ? 140 : 76,
               left: 14,
               right: 14,
               child: Center(
@@ -254,7 +349,7 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Simulation Control Buttons Bar (Flat 4px max radius, 1px solid border)
+                    // Simulation Control Buttons Bar
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
@@ -269,11 +364,19 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
                         children: [
                           OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             ),
                             icon: const Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.primary),
-                            label: Text('Check In Now', style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w600)),
+                            label: Text('Check In', style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w600)),
                             onPressed: () => _showCheckInModal(context),
+                          ),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            ),
+                            icon: const Icon(Icons.record_voice_over_outlined, size: 14, color: AppColors.primary),
+                            label: Text('Voice Companion', style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w600)),
+                            onPressed: () => context.push('/voice-companion'),
                           ),
                           FilterChip(
                             avatar: Icon(
@@ -282,7 +385,7 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
                               color: journey.isDeviated ? AppColors.sosRed : AppColors.textSecondary,
                             ),
                             label: Text(
-                              journey.isDeviated ? 'Normal Route' : 'Test Safety Trigger',
+                              journey.isDeviated ? 'Normal Route' : 'Test Safety',
                               style: GoogleFonts.ibmPlexMono(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -293,9 +396,19 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
                             onSelected: (_) => journeyNotifier.toggleOffRouteDeviation(),
                             selectedColor: AppColors.sosRedBg,
                           ),
+                          if (isDemoMode)
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                side: const BorderSide(color: AppColors.warningAmber, width: 1.0),
+                              ),
+                              icon: const Icon(Icons.speed_outlined, size: 14, color: AppColors.warningAmber),
+                              label: Text('Simulate Speed', style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.warningAmber)),
+                              onPressed: () => journeyNotifier.simulateVehicleSpeed(),
+                            ),
                           OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             ),
                             icon: const Icon(Icons.phone_callback_outlined, size: 14, color: AppColors.accentSecondary),
                             label: Text('Fake Call', style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w600)),
@@ -303,7 +416,7 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
                           ),
                           OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                               side: const BorderSide(color: AppColors.safeGreen, width: 1.0),
                             ),
                             icon: const Icon(Icons.check_circle_outline, size: 14, color: AppColors.safeGreen),
@@ -316,14 +429,14 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
 
                     const SizedBox(height: 8),
 
-                    // PERSISTENT EMERGENCY SOS BUTTON (Deep Red #B3261E, 4px max radius, solid fill, no shadow)
+                    // PERSISTENT EMERGENCY SOS BUTTON
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton.icon(
                         onPressed: () => journeyNotifier.triggerSOS(triggerSource: 'Manual Emergency SOS Pressed'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.sosRed, // #B3261E Deep Red
+                          backgroundColor: AppColors.sosRed,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(

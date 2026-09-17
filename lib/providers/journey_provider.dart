@@ -6,15 +6,20 @@ import '../models/journey_mode_config.dart';
 import '../models/check_in.dart';
 import '../services/ai_service.dart';
 import '../services/location_service.dart';
+import '../services/journey_sync_service.dart';
+import '../services/speed_classifier_service.dart';
 import 'ai_provider.dart';
 import 'settings_provider.dart';
 import 'stealth_provider.dart';
 
 class JourneyStateNotifier extends StateNotifier<Journey?> {
   final AIService _aiService;
+  final JourneySyncService _syncService;
   final String _duressPhrase;
   final bool _isDemoMode;
   final bool _isStealthModeActive;
+
+  final SpeedClassifierService _speedClassifier = SpeedClassifierService();
 
   Timer? _countdownTimer;
   Timer? _locationTimer;
@@ -24,6 +29,7 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
 
   JourneyStateNotifier(
     this._aiService,
+    this._syncService,
     this._duressPhrase,
     this._isDemoMode,
     this._isStealthModeActive,
@@ -37,6 +43,7 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
     required Duration expectedDuration,
     LatLng? startLatLng,
   }) async {
+    _speedClassifier.reset();
     final startPos = startLatLng ?? LocationService.defaultStart;
     final routePoints = LocationService.generateMockRoute(startPos, destinationLatLng);
 
@@ -53,6 +60,7 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
     );
 
     state = newJourney;
+    await _syncService.publishJourney(newJourney);
 
     // Generate Risk Briefing asynchronously
     final briefing = await _aiService.generateRiskBriefing(
@@ -62,6 +70,7 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
     );
     if (state != null) {
       state = state!.copyWith(riskBriefing: briefing);
+      await _syncService.publishJourney(state!);
     }
 
     _resetCheckInCountdown();
@@ -102,21 +111,117 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
 
     // Location update timer (simulates movement along route)
     int routeIdx = 0;
-    _locationTimer = Timer.periodic(const Duration(seconds: 3), (t) {
+    _locationTimer = Timer.periodic(const Duration(seconds: 3), (t) async {
       if (state == null || state!.status != JourneyStatus.active || state!.isDeviated) return;
 
       if (state!.routePoints.isNotEmpty) {
         routeIdx = (routeIdx + 1) % state!.routePoints.length;
         final nextPos = state!.routePoints[routeIdx];
-        state = state!.copyWith(currentPosition: nextPos);
+        final now = DateTime.now();
+
+        _speedClassifier.addSample(nextPos, now);
+        final speedRes = _speedClassifier.evaluateCurrentSpeed();
+
+        // Check for Auto Mode-Switch (Walking -> Bus on sustained vehicle speed)
+        if (speedRes.shouldSwitchMode &&
+            state!.mode.id != 'train' &&
+            state!.mode.id != 'bus' &&
+            !state!.userManualOverride) {
+          final busMode = JourneyModeConfig.defaultModes.firstWhere(
+            (m) => m.id == 'bus',
+            orElse: () => state!.mode,
+          );
+
+          final autoSwitchEvent = CheckIn(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            timestamp: now,
+            promptText: 'Auto Mode-Switch Engine',
+            userResponse: '[Vehicle Speed ${speedRes.currentSpeedKmh.toStringAsFixed(0)} km/h Detected]',
+            classification: CheckInClassification(
+              status: CheckInStatus.safe,
+              rationale: 'Automated transition to Bus monitoring profile based on sustained vehicle speed.',
+              duressDetected: false,
+            ),
+          );
+
+          state = state!.copyWith(
+            mode: busMode,
+            autoSwitchedNotice: 'Detected vehicle speed (${speedRes.currentSpeedKmh.toStringAsFixed(0)} km/h) — switched to Bus monitoring profile',
+            checkIns: [...state!.checkIns, autoSwitchEvent],
+            currentPosition: nextPos,
+          );
+          _resetCheckInCountdown();
+        } else {
+          state = state!.copyWith(currentPosition: nextPos);
+        }
+
+        await _syncService.publishJourney(state!);
       }
     });
+  }
+
+  /// Demo Trigger: Simulates sustained vehicle speed (25 km/h) to test auto mode-switching live
+  void simulateVehicleSpeed() {
+    if (state == null) return;
+    final now = DateTime.now();
+    final currentPos = state!.currentPosition;
+
+    // Inject fake distant points to simulate vehicle speed
+    const Distance dist = Distance();
+    final p1 = dist.offset(currentPos, 200, 90);
+    final p2 = dist.offset(p1, 200, 90);
+
+    _speedClassifier.addSample(currentPos, now.subtract(const Duration(seconds: 4)));
+    _speedClassifier.addSample(p1, now.subtract(const Duration(seconds: 2)));
+    _speedClassifier.addSample(p2, now);
+
+    final busMode = JourneyModeConfig.defaultModes.firstWhere(
+      (m) => m.id == 'bus',
+      orElse: () => state!.mode,
+    );
+
+    final autoSwitchEvent = CheckIn(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: now,
+      promptText: 'Auto Mode-Switch Engine (Simulated)',
+      userResponse: '[Simulated Vehicle Speed 25 km/h]',
+      classification: const CheckInClassification(
+        status: CheckInStatus.safe,
+        rationale: 'Automated transition to Bus monitoring profile based on sustained vehicle speed.',
+        duressDetected: false,
+      ),
+    );
+
+    state = state!.copyWith(
+      mode: busMode,
+      autoSwitchedNotice: 'Detected vehicle speed (25 km/h) — switched to Bus monitoring profile',
+      checkIns: [...state!.checkIns, autoSwitchEvent],
+    );
+    _resetCheckInCountdown();
+    _syncService.publishJourney(state!);
+  }
+
+  /// Manually override / reselect mode during an active journey
+  void overrideMode(JourneyModeConfig newMode) {
+    if (state == null) return;
+    state = state!.copyWith(
+      mode: newMode,
+      userManualOverride: true,
+      clearAutoSwitchNotice: true,
+    );
+    _resetCheckInCountdown();
+    _syncService.publishJourney(state!);
+  }
+
+  /// Dismiss auto-switch notification banner
+  void dismissAutoSwitchNotice() {
+    if (state == null) return;
+    state = state!.copyWith(clearAutoSwitchNotice: true);
   }
 
   Future<void> _triggerPendingCheckIn() async {
     if (state == null) return;
 
-    // Generate context-aware prompt from Gemini
     final promptText = await _aiService.generateCheckInPrompt(state!.mode, state!);
 
     final pendingCheckIn = CheckIn(
@@ -131,9 +236,9 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
       status: JourneyStatus.checkInPending,
       checkIns: updatedCheckIns,
     );
+    await _syncService.publishJourney(state!);
   }
 
-  /// Perform silent passive check-in during Stealth Mode
   Future<void> _performPassiveCheckIn() async {
     if (state == null) return;
 
@@ -176,9 +281,10 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
       );
       _resetCheckInCountdown();
     }
+    await _syncService.publishJourney(state!);
   }
 
-  /// User responds to check-in prompt via modal
+  /// User responds to check-in prompt via modal or voice companion
   Future<CheckInClassification> submitCheckInResponse(
     String userResponse, {
     bool isVoice = false,
@@ -210,7 +316,6 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
     ];
 
     if (classification.status == CheckInStatus.concerning || classification.duressDetected) {
-      // Escalation / SOS state triggered!
       final summary = await _aiService.generateIncidentSummary(state!, updatedCheckIn);
       state = state!.copyWith(
         status: JourneyStatus.escalated,
@@ -218,7 +323,6 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
         incidentSummary: summary,
       );
     } else {
-      // Safe or Uncertain -> Continue Journey
       state = state!.copyWith(
         status: JourneyStatus.active,
         checkIns: updatedCheckIns,
@@ -226,10 +330,10 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
       _resetCheckInCountdown();
     }
 
+    await _syncService.publishJourney(state!);
     return classification;
   }
 
-  /// Manually toggle route deviation to test safety engine
   void toggleOffRouteDeviation() {
     if (state == null) return;
 
@@ -252,9 +356,9 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
         _triggerPendingCheckIn();
       }
     }
+    _syncService.publishJourney(state!);
   }
 
-  /// Trigger manual SOS or automated timer timeout escalation
   Future<void> triggerSOS({String triggerSource = 'Manual SOS Button'}) async {
     if (state == null) return;
 
@@ -277,9 +381,9 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
       status: JourneyStatus.escalated,
       incidentSummary: summary,
     );
+    await _syncService.publishJourney(state!);
   }
 
-  /// Complete Journey Safely
   Future<void> completeJourney() async {
     if (state == null) return;
     _stopTimers();
@@ -288,9 +392,9 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
       status: JourneyStatus.completed,
       arrivalSummary: arrivalSummary,
     );
+    await _syncService.publishJourney(state!);
   }
 
-  /// Cancel & Reset
   void cancelJourney() {
     _stopTimers();
     state = null;
@@ -310,8 +414,9 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
 
 final journeyProvider = StateNotifierProvider<JourneyStateNotifier, Journey?>((ref) {
   final aiService = ref.watch(aiServiceProvider);
+  final syncService = ref.watch(journeySyncServiceProvider);
   final duressPhrase = ref.watch(settingsProvider.select((s) => s.duressPhrase));
   final isDemoMode = ref.watch(settingsProvider.select((s) => s.isDemoMode));
   final isStealthModeActive = ref.watch(stealthProvider.select((s) => s.isStealthModeActive));
-  return JourneyStateNotifier(aiService, duressPhrase, isDemoMode, isStealthModeActive);
+  return JourneyStateNotifier(aiService, syncService, duressPhrase, isDemoMode, isStealthModeActive);
 });

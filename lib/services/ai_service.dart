@@ -11,6 +11,33 @@ class AIService {
 
   bool get hasApiKey => apiKey != null && apiKey!.trim().isNotEmpty;
 
+  /// Generates a natural companion small-talk filler line or embedded check-in question.
+  Future<String> generateCompanionLine({required bool isCheckInQuestion}) async {
+    if (isCheckInQuestion) {
+      if (!hasApiKey) return "Hey, just checking in — are you almost home and everything good?";
+      try {
+        final text = await _callGeminiText(
+          "You are acting as a reassuring phone contact ('Mom' or a friend). "
+          "Generate a casual, natural line asking if the speaker is getting home safely.",
+          "Generate companion check-in question.",
+        );
+        if (text != null && text.trim().isNotEmpty) return text.trim();
+      } catch (_) {}
+      return "Hey, just checking in — are you almost home and everything good?";
+    } else {
+      if (!hasApiKey) return "So yeah, work was pretty busy today... how was your afternoon?";
+      try {
+        final text = await _callGeminiText(
+          "You are acting as a reassuring phone contact ('Mom' or a friend). "
+          "Generate a brief (1 short sentence) natural casual filler conversation line for a phone call.",
+          "Generate casual call line.",
+        );
+        if (text != null && text.trim().isNotEmpty) return text.trim();
+      } catch (_) {}
+      return "So yeah, work was pretty busy today... how was your afternoon?";
+    }
+  }
+
   /// Generates a natural, mode-aware check-in prompt given the journey state.
   Future<String> generateCheckInPrompt(
     JourneyModeConfig mode,

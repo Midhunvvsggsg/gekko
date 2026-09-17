@@ -241,6 +241,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           subtitle: 'Stock calculator shell',
                           onTap: () => ref.read(stealthProvider.notifier).enableStealth(),
                         ),
+                        _buildQuickActionTile(
+                          context,
+                          icon: Icons.record_voice_over_outlined,
+                          title: 'Voice Companion',
+                          subtitle: 'Proactive deterrent call',
+                          onTap: () => context.push('/voice-companion'),
+                        ),
                       ],
                     );
                   },
