@@ -34,9 +34,9 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   bool _isDetectingStartLocation = true;
 
   final List<Map<String, dynamic>> _destinationPresets = [
-    {'name': 'Union Square, SF', 'coords': LocationService.destinationSF1},
-    {'name': 'Mission District, SF', 'coords': LocationService.destinationSF2},
-    {'name': 'Embarcadero Pier, SF', 'coords': LocationService.destinationSF3},
+    {'name': 'Muvattupuzha KSRTC Bus Stand', 'coords': LocationService.destinationSF1},
+    {'name': 'Infopark Kakkanad, Kochi', 'coords': LocationService.destinationSF2},
+    {'name': 'Ernakulam South Station', 'coords': LocationService.destinationSF3},
   ];
 
   @override
@@ -129,7 +129,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
 
   void _onStartJourney() {
     final destName = _destinationController.text.trim().isEmpty
-        ? 'Union Square, San Francisco'
+        ? 'Muvattupuzha KSRTC Stand, Ernakulam'
         : _destinationController.text.trim();
 
     final startLatLng = _currentStartLocation?.position ?? LocationService.defaultStart;
@@ -253,7 +253,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
                   },
                   decoration: InputDecoration(
                     labelText: 'Destination Address or Landmark',
-                    hintText: 'e.g. Market St & 4th St, San Francisco, CA',
+                    hintText: 'e.g. Muvattupuzha KSRTC Stand, Ernakulam',
                     prefixIcon: const Icon(Icons.place_outlined, color: AppColors.textPrimary, size: 20),
                     suffixIcon: _isSearchingLocation
                         ? const Padding(

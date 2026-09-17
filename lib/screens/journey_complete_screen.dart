@@ -16,7 +16,7 @@ class JourneyCompleteScreen extends ConsumerWidget {
         ? DateTime.now().difference(journey.startTime).inMinutes.clamp(1, 999)
         : 18;
     final checkInCount = journey?.checkIns.length ?? 2;
-    final dest = journey?.destinationName ?? 'Union Square, San Francisco';
+    final dest = journey?.destinationName ?? 'Muvattupuzha KSRTC Stand, Ernakulam';
     final modeName = journey?.mode.label ?? 'Walking';
 
     final aiSummaryText = journey?.arrivalSummary ??

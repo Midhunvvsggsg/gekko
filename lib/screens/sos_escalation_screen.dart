@@ -67,7 +67,7 @@ class _SosEscalationScreenState extends ConsumerState<SosEscalationScreen> {
     final isDemoMode = ref.watch(settingsProvider.select((s) => s.isDemoMode));
 
     final summaryText = journey?.incidentSummary ??
-        "🚨 EMERGENCY INCIDENT REPORT\n\n• Trigger Reason: Manual Emergency SOS Alarm\n• Last Known Location: 37.7749, -122.4194 (Union Square, SF)\n• Journey Mode: ${journey?.mode.label ?? 'Walking'}\n• Elapsed Time: ${journey != null ? DateTime.now().difference(journey.startTime).inMinutes : 12} mins\n• Status: Automated emergency contact payloads dispatched.";
+        "🚨 EMERGENCY INCIDENT REPORT\n\n• Trigger Reason: Manual Emergency SOS Alarm\n• Last Known Location: 9.9816, 76.5786 (Muvattupuzha, Ernakulam)\n• Journey Mode: ${journey?.mode.label ?? 'Walking'}\n• Elapsed Time: ${journey != null ? DateTime.now().difference(journey.startTime).inMinutes : 12} mins\n• Status: Automated emergency contact payloads dispatched.";
 
     final triggerReason = journey?.checkIns.isNotEmpty == true && journey!.checkIns.last.classification != null
         ? journey.checkIns.last.classification!.rationale
@@ -198,7 +198,7 @@ class _SosEscalationScreenState extends ConsumerState<SosEscalationScreen> {
                       ),
                       const Divider(height: 20, color: AppColors.border),
                       _buildIncidentRow('Trigger Reason', triggerReason),
-                      _buildIncidentRow('Last Location', '${journey?.currentPosition.latitude.toStringAsFixed(4) ?? "37.7749"}, ${journey?.currentPosition.longitude.toStringAsFixed(4) ?? "-122.4194"} (${journey?.destinationName ?? "Union Square"})'),
+                      _buildIncidentRow('Last Location', '${journey?.currentPosition.latitude.toStringAsFixed(4) ?? "9.9816"}, ${journey?.currentPosition.longitude.toStringAsFixed(4) ?? "76.5786"} (${journey?.destinationName ?? "Muvattupuzha"})'),
                       _buildIncidentRow('Journey Mode', journey?.mode.label ?? 'Walking'),
                       _buildIncidentRow('Elapsed Time', '${journey != null ? DateTime.now().difference(journey.startTime).inMinutes : 14} minutes'),
                       _buildIncidentRow('Last Check-In', journey?.checkIns.isNotEmpty == true ? (journey!.checkIns.last.classification?.status.name.toUpperCase() ?? 'PENDING') : 'UNRESPONSIVE'),

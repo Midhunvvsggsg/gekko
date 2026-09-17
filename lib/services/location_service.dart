@@ -27,13 +27,13 @@ class CurrentLocationResult {
 }
 
 class LocationService {
-  // Demo coordinates centered around San Francisco
-  static const LatLng defaultStart = LatLng(37.7749, -122.4194);
-  static const LatLng destinationSF1 = LatLng(37.7833, -122.4167); // Union Square area
-  static const LatLng destinationSF2 = LatLng(37.7600, -122.4100); // Mission District
-  static const LatLng destinationSF3 = LatLng(37.7890, -122.4014); // Embarcadero
+  // Default coordinates centered at Muvattupuzha, Ernakulam, Kerala, India
+  static const LatLng defaultStart = LatLng(9.9816, 76.5786);
+  static const LatLng destinationSF1 = LatLng(9.9796, 76.5777); // Muvattupuzha KSRTC Stand
+  static const LatLng destinationSF2 = LatLng(10.0088, 76.3637); // Infopark Kakkanad, Kochi
+  static const LatLng destinationSF3 = LatLng(9.9678, 76.2891); // Ernakulam South Station
 
-  /// Attempts to fetch live device position, falling back gracefully to default SF location if unavailable
+  /// Attempts to fetch live device position, falling back gracefully to default Muvattupuzha location if unavailable
   static Future<CurrentLocationResult> getCurrentDeviceLocation() async {
     try {
       final res = await http
@@ -61,7 +61,7 @@ class LocationService {
 
     return CurrentLocationResult(
       position: defaultStart,
-      locationName: 'Default Console (Union Square, SF • 37.775, -122.419)',
+      locationName: 'Default Console (Muvattupuzha, Ernakulam • 9.982, 76.579)',
       isLiveGps: false,
     );
   }
@@ -86,7 +86,7 @@ class LocationService {
         if (features.isNotEmpty) {
           return features.map<LocationSearchResult>((f) {
             final props = f['properties'] ?? {};
-            final coords = f['geometry']?['coordinates'] ?? [-122.4194, 37.7749];
+            final coords = f['geometry']?['coordinates'] ?? [76.5786, 9.9816];
             final lng = (coords[0] as num).toDouble();
             final lat = (coords[1] as num).toDouble();
 
@@ -110,16 +110,14 @@ class LocationService {
     final List<LocationSearchResult> dynamicResults = [];
     final lower = cleanQuery.toLowerCase();
 
-    // Preset location registry
+    // Preset location registry (Muvattupuzha & Ernakulam Kerala Landmarks)
     final presets = [
-      LocationSearchResult(name: 'Union Square, SF', description: 'Union Square Shopping & Transit, San Francisco, CA', latLng: destinationSF1),
-      LocationSearchResult(name: 'Mission District, SF', description: 'Mission District Cultural Hub, San Francisco, CA', latLng: destinationSF2),
-      LocationSearchResult(name: 'Embarcadero Pier, SF', description: 'Embarcadero Waterfront Terminal, San Francisco, CA', latLng: destinationSF3),
-      LocationSearchResult(name: 'Financial District, SF', description: 'Financial District Commercial Center, San Francisco, CA', latLng: const LatLng(37.7946, -122.3999)),
-      LocationSearchResult(name: 'Central Train Station', description: 'Central Metro & Transit Station', latLng: const LatLng(37.7766, -122.3942)),
-      LocationSearchResult(name: 'International Airport', description: 'SFO International Airport Terminal', latLng: const LatLng(37.6213, -122.3790)),
-      LocationSearchResult(name: 'Golden Gate Park', description: 'Golden Gate Park & Recreation Area, SF', latLng: const LatLng(37.7694, -122.4862)),
-      LocationSearchResult(name: 'Market Street Hub', description: 'Market Street Public Transit Corridor', latLng: const LatLng(37.7800, -122.4100)),
+      LocationSearchResult(name: 'Muvattupuzha KSRTC Bus Stand', description: 'Muvattupuzha KSRTC Bus Station, Ernakulam, Kerala', latLng: destinationSF1),
+      LocationSearchResult(name: 'Infopark Kakkanad, Kochi', description: 'Infopark Tech Campus, Kakkanad, Ernakulam', latLng: destinationSF2),
+      LocationSearchResult(name: 'Ernakulam South Railway Station', description: 'Ernakulam Junction South Railway Station', latLng: destinationSF3),
+      LocationSearchResult(name: 'Cochin International Airport (COK)', description: 'Nedumbassery, Ernakulam, Kerala', latLng: const LatLng(10.1520, 76.3922)),
+      LocationSearchResult(name: 'Lulu Mall Edappally', description: 'Edappally Toll, Kochi, Ernakulam', latLng: const LatLng(10.0270, 76.3080)),
+      LocationSearchResult(name: 'Marine Drive Kochi', description: 'Marine Drive Promenade, Kochi Waterfront', latLng: const LatLng(9.9780, 76.2760)),
     ];
 
     for (final p in presets) {
@@ -132,16 +130,16 @@ class LocationService {
     final capitalized = cleanQuery[0].toUpperCase() + cleanQuery.substring(1);
     dynamicResults.add(
       LocationSearchResult(
-        name: '$capitalized Street',
-        description: '$capitalized Street Address, Downtown',
-        latLng: LatLng(37.7749 + (cleanQuery.length * 0.001), -122.4194 + (cleanQuery.length * 0.001)),
+        name: '$capitalized Junction / Stop',
+        description: '$capitalized Landmark, Muvattupuzha Region',
+        latLng: LatLng(9.9816 + (cleanQuery.length * 0.001), 76.5786 + (cleanQuery.length * 0.001)),
       ),
     );
     dynamicResults.add(
       LocationSearchResult(
-        name: '$capitalized Station / Terminal',
-        description: '$capitalized Central Transit Hub',
-        latLng: LatLng(37.7800 + (cleanQuery.length * 0.001), -122.4100 - (cleanQuery.length * 0.001)),
+        name: '$capitalized Bus Station',
+        description: '$capitalized Central Transit Stop, Ernakulam',
+        latLng: LatLng(9.9796 + (cleanQuery.length * 0.001), 76.5777 - (cleanQuery.length * 0.001)),
       ),
     );
 
