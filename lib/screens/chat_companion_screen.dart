@@ -220,6 +220,8 @@ class _ChatCompanionScreenState extends ConsumerState<ChatCompanionScreen> {
                 children: [
                   _buildQuickChip('Is this route safe?'),
                   _buildQuickChip('I feel uncomfortable'),
+                  _buildQuickChip('I am NOT safe! 🚨'),
+                  _buildQuickChip('Someone is following me 🚨'),
                   _buildQuickChip('Someone is behind me'),
                   _buildQuickChip('How far to destination?'),
                   _buildQuickChip('Keep me company'),

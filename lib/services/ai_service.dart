@@ -318,7 +318,7 @@ class AIService {
     String rationale = "Normal conversation interaction.";
     String reply = "I'm right here with you on your $modeStr journey to $destStr. Stay alert and keep moving towards well-lit areas!";
 
-    if (lower.contains('help') || lower.contains('danger') || lower.contains('attack') || lower.contains('emergency') || lower.contains('follow')) {
+    if (lower.contains('help') || lower.contains('not safe') || lower.contains('unsafe') || lower.contains('danger') || lower.contains('attack') || lower.contains('emergency') || lower.contains('follow')) {
       status = CheckInStatus.concerning;
       rationale = "High safety threat or panic keyword detected.";
       reply = "🚨 Safety Alert: I'm flagging this immediately. Head towards a crowded place or tap the Emergency SOS button below to alert your contacts!";
@@ -516,6 +516,8 @@ class AIService {
     String rationale = "User confirmed normal progress and safe status.";
 
     if (lower.contains('help') ||
+        lower.contains('not safe') ||
+        lower.contains('unsafe') ||
         lower.contains('follow') ||
         lower.contains('following') ||
         lower.contains('chasing') ||

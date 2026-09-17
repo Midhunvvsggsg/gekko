@@ -267,10 +267,34 @@ class _CheckInModalState extends ConsumerState<CheckInModal> {
                         side: const BorderSide(color: AppColors.warningAmber, width: 1.0),
                       ),
                       onPressed: () {
-                        _responseController.text = 'Feeling a bit uncomfortable, someone behind me';
+                        _responseController.text = 'Feeling uncomfortable, unlit path';
                         _submitResponse();
                       },
                       child: Text('Feeling uncomfortable ⚠️', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.warningAmber, fontWeight: FontWeight.w700)),
+                    ),
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        backgroundColor: AppColors.sosRedBg,
+                        side: const BorderSide(color: AppColors.sosRed, width: 1.0),
+                      ),
+                      onPressed: () {
+                        _responseController.text = 'I am NOT safe! I need emergency assistance';
+                        _submitResponse();
+                      },
+                      child: Text('NOT SAFE, HELP! 🚨', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.sosRed, fontWeight: FontWeight.w700)),
+                    ),
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        backgroundColor: AppColors.sosRedBg,
+                        side: const BorderSide(color: AppColors.sosRed, width: 1.0),
+                      ),
+                      onPressed: () {
+                        _responseController.text = 'Someone is following me closely, I feel unsafe';
+                        _submitResponse();
+                      },
+                      child: Text('Someone following me 🚨', style: GoogleFonts.ibmPlexMono(fontSize: 11, color: AppColors.sosRed, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
