@@ -70,7 +70,7 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
   void _onDestinationQueryChanged(String query) async {
     _fetchRiskBriefing();
 
-    if (query.trim().length < 2) {
+    if (query.trim().isEmpty) {
       setState(() {
         _searchResults = [];
         _isSearchingLocation = false;
