@@ -323,64 +323,65 @@ class _JourneySetupScreenState extends ConsumerState<JourneySetupScreen> {
 
                 const SizedBox(height: 14),
 
-                // Expected Duration Chips & Custom Input Field
+                // Expected Duration Section (Prominent Custom Input + Presets)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('EXPECTED DURATION: ', style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    Text(
+                      'EXPECTED DURATION (MINUTES)',
+                      style: GoogleFonts.ibmPlexMono(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0.8),
+                    ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [15, 20, 30, 45, 60].map((mins) {
-                              final isSelected = _expectedDurationMinutes == mins;
-                              return ChoiceChip(
-                                label: Text('${mins}M'),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    setState(() {
-                                      _expectedDurationMinutes = mins;
-                                      _durationController.text = mins.toString();
-                                    });
-                                  }
-                                },
-                                selectedColor: AppColors.primary,
-                                labelStyle: GoogleFonts.ibmPlexMono(
-                                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              );
-                            }).toList(),
+
+                    // Quick Preset Chips
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [15, 20, 30, 45, 60].map((mins) {
+                        final isSelected = _expectedDurationMinutes == mins;
+                        return ChoiceChip(
+                          label: Text('${mins}M PRESET'),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _expectedDurationMinutes = mins;
+                                _durationController.text = mins.toString();
+                              });
+                            }
+                          },
+                          selectedColor: AppColors.primary,
+                          labelStyle: GoogleFonts.ibmPlexMono(
+                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 110,
-                          child: TextField(
-                            controller: _durationController,
-                            keyboardType: TextInputType.number,
-                            style: GoogleFonts.ibmPlexMono(fontSize: 13, fontWeight: FontWeight.w700),
-                            decoration: const InputDecoration(
-                              labelText: 'Custom',
-                              suffixText: 'mins',
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                            ),
-                            onChanged: (val) {
-                              final parsed = int.tryParse(val.trim());
-                              if (parsed != null && parsed > 0) {
-                                setState(() {
-                                  _expectedDurationMinutes = parsed;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                      ],
+                        );
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Prominent Dedicated Custom Duration Input Field
+                    TextField(
+                      controller: _durationController,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.ibmPlexMono(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Enter Custom Duration (Minutes)',
+                        hintText: 'e.g. 10, 25, 45, 90...',
+                        prefixIcon: const Icon(Icons.timer_outlined, color: AppColors.primary, size: 20),
+                        suffixText: 'MINUTES',
+                        suffixStyle: GoogleFonts.ibmPlexMono(fontWeight: FontWeight.w700, fontSize: 11, color: AppColors.primary),
+                      ),
+                      onChanged: (val) {
+                        final parsed = int.tryParse(val.trim());
+                        if (parsed != null && parsed > 0) {
+                          setState(() {
+                            _expectedDurationMinutes = parsed;
+                          });
+                        }
+                      },
                     ),
                   ],
                 ),
