@@ -15,7 +15,6 @@ import 'screens/fake_call_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/calculator_screen.dart';
 import 'screens/track_journey_screen.dart';
-import 'screens/voice_companion_screen.dart';
 import 'screens/chat_companion_screen.dart';
 
 void main() async {
@@ -74,10 +73,6 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => TrackJourneyScreen(
         journeyId: state.pathParameters['journeyId'] ?? '',
       ),
-    ),
-    GoRoute(
-      path: '/voice-companion',
-      builder: (context, state) => const VoiceCompanionScreen(),
     ),
     GoRoute(
       path: '/chat-companion',

@@ -287,7 +287,7 @@ class JourneyStateNotifier extends StateNotifier<Journey?> {
     await _syncService.publishJourney(state!);
   }
 
-  /// User responds to check-in prompt via modal or voice companion
+  /// User responds to check-in prompt via modal or AI companion
   Future<CheckInClassification> submitCheckInResponse(
     String userResponse, {
     bool isVoice = false,

@@ -374,9 +374,9 @@ class _ActiveJourneyScreenState extends ConsumerState<ActiveJourneyScreen> {
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             ),
-                            icon: const Icon(Icons.record_voice_over_outlined, size: 14, color: AppColors.primary),
-                            label: Text('Voice Companion', style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w600)),
-                            onPressed: () => context.push('/voice-companion'),
+                            icon: const Icon(Icons.chat_outlined, size: 14, color: AppColors.primary),
+                            label: Text('AI Companion', style: GoogleFonts.ibmPlexMono(fontSize: 11, fontWeight: FontWeight.w600)),
+                            onPressed: () => context.push('/chat-companion'),
                           ),
                           FilterChip(
                             avatar: Icon(
